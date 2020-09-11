@@ -6,10 +6,13 @@ using System.Threading.Tasks;
 
 namespace qs_telemetry_dashboard
 {
-    class Program
-    {
-        static void Main(string[] args)
-        {
-        }
-    }
+	class Program
+	{
+		static void Main(string[] args)
+		{
+			Impersonation imp = new Impersonation();
+			imp.Run();
+			Console.ReadKey();
+		}
+	}
 }

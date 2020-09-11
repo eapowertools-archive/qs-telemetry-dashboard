@@ -10,6 +10,7 @@ using System.Security.Principal;
 using System.ComponentModel;
 using System.IO;
 using System.Configuration;
+using qs_telemetry_dashboard.CertificateFetch;
 
 namespace qs_telemetry_dashboard
 {
@@ -17,7 +18,7 @@ namespace qs_telemetry_dashboard
 	{
 		private static X509Certificate2 certificate_ { get; set; }
 
-		static void Main(string[] args)
+		public void Run()
 		{
 			ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
 			ServicePointManager.Expect100Continue = true;
@@ -25,7 +26,7 @@ namespace qs_telemetry_dashboard
 
 			try
 			{
-				using (WindowsImpersonator svc = new WindowsImpersonator("qlikservice", "DESKTOP-GS8LAA5", "qlik123"))
+				using (WindowsImpersonator svc = new WindowsImpersonator("qlikservice", "qliktest", "Qlik!234"))
 				{
 					X509Store store = new X509Store(StoreName.My, StoreLocation.CurrentUser);
 					store.Open(OpenFlags.ReadOnly);
@@ -60,224 +61,9 @@ namespace qs_telemetry_dashboard
 			Stream stream = response.GetResponseStream();
 			Console.WriteLine(stream != null ? new StreamReader(stream).ReadToEnd() : string.Empty);
 			Console.WriteLine("Done.");
-			//X509Store store = new X509Store(StoreName.My, StoreLocation.CurrentUser);
-			//store.Open(OpenFlags.ReadOnly);
-			//certificate_ = store.Certificates.Cast<X509Certificate2>().FirstOrDefault(c => c.FriendlyName == "QlikClient");
-			//store.Close();
-			//ServicePointManager.ServerCertificateValidationCallback = delegate { return true; };
-
-			//Console.WriteLine();
-
-
-
-			//try
-			//{
-			//	string storeName = "Tang App";
-			//	StoreLocation storeLocation = StoreLocation.CurrentUser;
-			//	using (Impersonator imp = new Impersonator("TANG_PROC", "", ".123.456.Abc!"))
-			//	{
-			//		X509Store store = new X509Store(storeName, storeLocation);
-			//		store.Open(OpenFlags.ReadWrite);
-			//		X509Certificate2 importcert = new X509Certificate2();
-			//		importcert.Import(certToImport, certPassword, X509KeyStorageFlags.PersistKeySet);
-			//		store.Add(importcert);
-			//		store.Close();
-			//	}
-			//	Console.WriteLine("Certificate is imported.");
-			//}
-			//catch (Exception ex)
-			//{
-			//	Console.WriteLine(ex);
-			//}
 		}
 	}
 
 
-	class Impersonator : IDisposable
-	{
-		public Impersonator(string userName, string domainName, string password)
-		{
-			ImpersonateValidUser(userName, domainName, password);
-		}
-
-		public void Dispose()
-		{
-			UndoImpersonation();
-		}
-
-		#region P/Invoke.
-
-		[DllImport("advapi32.dll", SetLastError = true)]
-		private static extern int LogonUser(
-			string lpszUserName,
-			string lpszDomain,
-			string lpszPassword,
-			int dwLogonType,
-			int dwLogonProvider,
-			ref IntPtr phToken);
-
-		[DllImport("advapi32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-		private static extern int DuplicateToken(
-			IntPtr hToken,
-			int impersonationLevel,
-			ref IntPtr hNewToken);
-
-		[DllImport("advapi32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-		private static extern bool RevertToSelf();
-
-		[DllImport("kernel32.dll", CharSet = CharSet.Auto)]
-		private static extern bool CloseHandle(
-			IntPtr handle);
-
-		private const int LOGON32_LOGON_NETWORK = 3;
-		private const int LOGON32_PROVIDER_DEFAULT = 0;
-
-		#endregion
-
-		private void ImpersonateValidUser(string userName, string domain, string password)
-		{
-			WindowsIdentity tempWindowsIdentity = null;
-			IntPtr token = IntPtr.Zero;
-			IntPtr tokenDuplicate = IntPtr.Zero;
-
-			try
-			{
-				if (RevertToSelf())
-				{
-					if (LogonUser(
-						userName,
-						domain,
-						password,
-						LOGON32_LOGON_NETWORK,
-						LOGON32_PROVIDER_DEFAULT,
-						ref token) != 0)
-					{
-						if (DuplicateToken(token, 2, ref tokenDuplicate) != 0)
-						{
-							tempWindowsIdentity = new WindowsIdentity(tokenDuplicate);
-							impersonationContext = tempWindowsIdentity.Impersonate();
-						}
-						else
-						{
-							throw new Win32Exception(Marshal.GetLastWin32Error(), "Failed to DuplicateToken.");
-						}
-					}
-					else
-					{
-						throw new Win32Exception(Marshal.GetLastWin32Error(), "Failed to LogonUser.");
-					}
-				}
-				else
-				{
-					throw new Win32Exception(Marshal.GetLastWin32Error(), "Failed to RevertToSelf.");
-				}
-			}
-			finally
-			{
-				if (token != IntPtr.Zero)
-				{
-					CloseHandle(token);
-				}
-				if (tokenDuplicate != IntPtr.Zero)
-				{
-					CloseHandle(tokenDuplicate);
-				}
-			}
-		}
-
-		private void UndoImpersonation()
-		{
-			if (impersonationContext != null)
-			{
-				impersonationContext.Undo();
-			}
-		}
-
-		private WindowsImpersonationContext impersonationContext = null;
-	}
-
-	public class WindowsImpersonator : IDisposable
-	{
-		public WindowsImpersonator(string userName, string domain, string password)
-		{
-			impersonateValidUser(userName, domain, password);
-		}
-
-		public void Dispose()
-		{
-			//undoImpersonation();
-		}
-
-		public const int LOGON32_LOGON_SERVICE = 5;
-		public const int LOGON32_PROVIDER_DEFAULT = 0;
-
-		WindowsImpersonationContext impersonationContext;
-
-		[DllImport("advapi32.dll")]
-		public static extern int LogonUserA(String lpszUserName,
-		String lpszDomain,
-		String lpszPassword,
-		int dwLogonType,
-		int dwLogonProvider,
-		ref IntPtr phToken);
-		[DllImport("advapi32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-		public static extern int DuplicateToken(IntPtr hToken,
-		int impersonationLevel,
-		ref IntPtr hNewToken);
-
-		[DllImport("advapi32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-		public static extern bool RevertToSelf();
-
-		[DllImport("kernel32.dll", CharSet = CharSet.Auto)]
-		public static extern bool CloseHandle(IntPtr handle);
-
-		public void Page_Load(Object s, EventArgs e)
-		{
-			if (impersonateValidUser("username", "domain", "password"))
-			{
-				//Insert your code that runs under the security context of a specific user here.
-				undoImpersonation();
-			}
-			else
-			{
-				//Your impersonation failed. Therefore, include a fail-safe mechanism here.
-			}
-		}
-
-		private bool impersonateValidUser(String userName, String domain, String password)
-		{
-			WindowsIdentity tempWindowsIdentity;
-			IntPtr token = IntPtr.Zero;
-			IntPtr tokenDuplicate = IntPtr.Zero;
-
-			if (RevertToSelf())
-			{
-				if (LogonUserA(userName, domain, password, LOGON32_LOGON_SERVICE,
-				LOGON32_PROVIDER_DEFAULT, ref token) != 0)
-				{
-					if (DuplicateToken(token, 2, ref tokenDuplicate) != 0)
-					{
-						tempWindowsIdentity = new WindowsIdentity(tokenDuplicate);
-						impersonationContext = tempWindowsIdentity.Impersonate();
-						if (impersonationContext != null)
-						{
-							CloseHandle(token);
-							CloseHandle(tokenDuplicate);
-							return true;
-						}
-					}
-				}
-			}
-			if (token != IntPtr.Zero)
-				CloseHandle(token);
-			if (tokenDuplicate != IntPtr.Zero)
-				CloseHandle(tokenDuplicate);
-			return false;
-		}
-
-		private void undoImpersonation()
-		{
-			impersonationContext.Undo();
-		}
-	}
+	
 }
