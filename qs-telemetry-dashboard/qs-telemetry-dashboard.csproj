@@ -43,7 +43,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Impersonation.cs" />
+    <Compile Include="TelemetryConfiguration.cs" />
+    <Compile Include="Impersonation\WindowsImpersonator.cs" />
     <Compile Include="Logging\Logger.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
