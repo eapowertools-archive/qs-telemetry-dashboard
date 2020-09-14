@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 using System.Security.Principal;
 using System.ComponentModel;
 
-namespace qs_telemetry_dashboard.CertificateFetch
+namespace qs_telemetry_dashboard.Impersonation
 {
 	internal class Impersonator : IDisposable
 	{
