@@ -4,31 +4,82 @@ using System.Linq;
 using System.Net;
 using System.Security;
 using System.Security.Cryptography.X509Certificates;
-
+using qs_telemetry_dashboard.Exceptions;
 using qs_telemetry_dashboard.Impersonation;
+using qs_telemetry_dashboard.Logging;
 
 namespace qs_telemetry_dashboard
 {
 	class Program
 	{
-
+		private static Logger _logger;
+		private static ArgumentManager _argsManager;
 		private static TelemetryConfiguration _configuration;
 		private static X509Certificate2 QlikCertificate { get; set; }
 		
-		static void Main(string[] args)
+		static int Main(string[] args)
 		{
-			// Load Configuration from file or create a new one
-			Console.Write("Enter password: ");
+			try
+			{
+				_argsManager = new ArgumentManager(args);
+			}
+			catch (ArgumentManagerException argManagerEx)
+			{
+				Console.WriteLine("Error handling arguments:\n" + argManagerEx.Message);
+				return 1;
+			}
+
+			var pwd = AppDomain.CurrentDomain.BaseDirectory;
+			LogLocation location = LogLocation.File;
+			LogLevel level = LogLevel.Info;
+			if (_argsManager.Interactive)
+			{
+				location = LogLocation.FileAndConsole;
+			}
+			if (_argsManager.DebugLog)
+			{
+				level = LogLevel.Debug;
+			}
+
+			try
+			{
+				_logger = new Logger(pwd, location, level);
+			}
+			catch (LoggingException logException)
+			{
+				Console.WriteLine("Error setting up logging:\n" + logException.Message);
+				if (logException.InnerException != null)
+				{
+					Console.WriteLine("\nInner exception:\n" + logException.InnerException.Message);
+				}
+				return 1;
+			}
+			_logger.Log("Arguments handled and logging initialized.", LogLevel.Info);
+
+			if (_argsManager.TestCredentialRun)
+			{
+				return TestCredentialRun();
+			}
+
+			return 0;
+		}
+
+		private static int TestCredentialRun()
+		{
 			_configuration = new TelemetryConfiguration();
-			_configuration.UserDirectory = "qliktest";
-			_configuration.UserName = "qservice";
-			_configuration.Hostname = "localhost";
-			_configuration.Password = GetPassword();
-
-
+			_logger.Log("Test Credential Mode", LogLevel.Debug);
+			Console.WriteLine("Below you will need to enter in credentials for the user running the Qlik Sense Repository Service on this server.");
+			Console.Write("User Domain: ");
+			_configuration.UserDirectory = Console.ReadLine();
+			Console.Write("Username: ");
+			_configuration.UserName = Console.ReadLine();
+			Console.Write("User Password: ");
+			SecureString password = GetPassword();
 			QlikCertificate = FetchCertificate();
 			TestConfiguration();
 			Console.ReadKey();
+
+			return 0;
 		}
 
 		public static SecureString GetPassword()

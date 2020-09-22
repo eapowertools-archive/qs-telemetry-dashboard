@@ -43,6 +43,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ArgumentManager.cs" />
+    <Compile Include="Exceptions\ArgumentManagerException.cs" />
+    <Compile Include="Exceptions\LoggingException.cs" />
     <Compile Include="TelemetryConfiguration.cs" />
     <Compile Include="Impersonation\WindowsImpersonator.cs" />
     <Compile Include="Logging\Logger.cs" />
