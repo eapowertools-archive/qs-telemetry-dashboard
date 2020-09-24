@@ -6,6 +6,8 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Data;
 using qs_telemetry_dashboard.Exceptions;
+using System.Collections.Concurrent;
+using System.Threading;
 
 namespace qs_telemetry_dashboard.Logging
 {
@@ -42,7 +44,14 @@ namespace qs_telemetry_dashboard.Logging
 				{
 					File.Delete(_logFileFullPath);
 				}
-				File.Create(_logFileFullPath);
+				using (StreamWriter sw = new StreamWriter(_logFileFullPath))
+				{
+					sw.WriteLine("------------------------------------------------");
+					sw.WriteLine("| Telemetry Dashboard metadata fetch execution |");
+					sw.WriteLine("------------------------------------------------");
+					sw.WriteLine(_logFileFullPath);
+					sw.WriteLine(DateTime.UtcNow.ToString("o") + "\n");
+				}
 			}
 			catch (UnauthorizedAccessException unauthorizedException)
 			{
@@ -89,7 +98,7 @@ namespace qs_telemetry_dashboard.Logging
 			{
 				_ticker++;
 				// generate message
-				string logMessage = String.Format("{0}\t\t{1}\t\t{2}\t\t{3}", _ticker, DateTime.Now.ToLongDateString(), level, message);
+				string logMessage = String.Format("{0}\t{1}\t{2}\t{3}", _ticker, DateTime.UtcNow.ToString("o"), level, message);
 
 				if (_logLocation == LogLocation.FileAndConsole)
 				{

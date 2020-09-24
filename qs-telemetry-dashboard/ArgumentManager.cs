@@ -22,6 +22,10 @@ namespace qs_telemetry_dashboard
 
 		internal bool TestCredentialRun { get; }
 
+		internal bool UpdateCertificate { get; }
+
+		internal bool Initialize { get; }
+
 		internal const string HELP_STRING =
 @"Telemetry Dashboard
 
@@ -42,7 +46,8 @@ Arguments:
 				MetadataFetch = false;
 				DebugLog = false;
 				TestCredentialRun = false;
-
+				UpdateCertificate = false;
+				Initialize = false;
 
 				Dictionary<string, string> argDic = args.ToDictionary(
 					x => {
@@ -87,18 +92,29 @@ Arguments:
 					DebugLog = true;
 				}
 
-				if (argDic.TryGetValue("-testcreds", out argValue))
+				if (argDic.TryGetValue("-testcredentials", out argValue))
 				{
-					argDic.Remove("-testcreds");
+					argDic.Remove("-testcredentials");
 					TestCredentialRun = true;
 					DebugLog = true;
+				}
+
+				if (argDic.TryGetValue("-updatecertificate", out argValue))
+				{
+					argDic.Remove("-updatecertificate");
+					UpdateCertificate = true;
+				}
+
+				if (argDic.TryGetValue("-initialize", out argValue))
+				{
+					argDic.Remove("-initialize");
+					Initialize = true;
 				}
 
 
 				if (argDic.Count > 0)
 				{
-					string argString = argDic.ToString();
-					throw new ArgumentManagerException("Unhandled argument: " + argString);
+					throw new ArgumentManagerException("Unhandled argument: " + string.Join(",", argDic.Select(kv => kv.Key).ToArray()));
 				}
 			}
 		}
