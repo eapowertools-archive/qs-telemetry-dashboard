@@ -13,18 +13,14 @@ namespace qs_telemetry_dashboard
 	internal class ArgumentManager
 	{
 		internal bool NoArgs { get; }
-
 		internal bool Interactive { get; }
-
-		internal bool MetadataFetch { get; }
-
 		internal bool DebugLog { get; }
-
 		internal bool TestCredentialRun { get; }
+		internal bool TestConfigurationRun { get; }
+		internal bool UpdateCertificateRun { get; }
+		internal bool InitializeRun { get; }
+		internal bool MetadataFetchRun { get; }
 
-		internal bool UpdateCertificate { get; }
-
-		internal bool Initialize { get; }
 
 		internal const string HELP_STRING =
 @"Telemetry Dashboard
@@ -43,11 +39,11 @@ Arguments:
 			else
 			{
 				NoArgs = false;
-				MetadataFetch = false;
+				MetadataFetchRun = false;
 				DebugLog = false;
 				TestCredentialRun = false;
-				UpdateCertificate = false;
-				Initialize = false;
+				UpdateCertificateRun = false;
+				InitializeRun = false;
 
 				Dictionary<string, string> argDic = args.ToDictionary(
 					x => {
@@ -76,7 +72,7 @@ Arguments:
 				if (argDic.TryGetValue("-metadatafetch", out argValue))
 				{
 					argDic.Remove("-metadatafetch");
-					MetadataFetch = true;
+					MetadataFetchRun = true;
 					Interactive = false;
 				}
 
@@ -99,16 +95,22 @@ Arguments:
 					DebugLog = true;
 				}
 
+				if (argDic.TryGetValue("-testconfiguration", out argValue))
+				{
+					argDic.Remove("-testconfiguration");
+					TestConfigurationRun = true;
+					DebugLog = true;
+				}
 				if (argDic.TryGetValue("-updatecertificate", out argValue))
 				{
 					argDic.Remove("-updatecertificate");
-					UpdateCertificate = true;
+					UpdateCertificateRun = true;
 				}
 
 				if (argDic.TryGetValue("-initialize", out argValue))
 				{
 					argDic.Remove("-initialize");
-					Initialize = true;
+					InitializeRun = true;
 				}
 
 

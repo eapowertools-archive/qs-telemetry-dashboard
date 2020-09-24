@@ -19,8 +19,6 @@ namespace qs_telemetry_dashboard
 	{
 		private static Logger _logger;
 		private static ArgumentManager _argsManager;
-		private static TelemetryConfiguration _configuration;
-		private static QRSRequest _qrsRequest;
 		
 		static int Main(string[] args)
 		{
@@ -60,14 +58,14 @@ namespace qs_telemetry_dashboard
 				return 1;
 			}
 			_logger.Log("Arguments handled and logging initialized.", LogLevel.Info);
+			_logger.Log("Current working directory: " + pwd, LogLevel.Debug);
 
 			if (_argsManager.TestCredentialRun)
 			{
 				return TestCredentialRun();
 			}
-
 			// wrap stuff in try catches and catch exceptions
-			else if (_argsManager.UpdateCertificate)
+			else if (_argsManager.UpdateCertificateRun)
 			{
 				ConfigurationManager configManager = new ConfigurationManager(_logger, pwd);
 				QlikCredentials creds = GetCredentials();
@@ -75,8 +73,27 @@ namespace qs_telemetry_dashboard
 				configManager.SetConfig(hostname, FetchCertificate(creds));
 				return 0;
 			}
-
-			else if (_argsManager.Initialize)
+			else if (_argsManager.TestConfigurationRun)
+			{
+				ConfigurationManager configManager = new ConfigurationManager(_logger, pwd);
+				if (!configManager.HasConfiguration)
+				{
+					_logger.Log("Failed to get configuration. Unable to test configuration. Test failed.", LogLevel.Error);
+					return 1;
+				}
+				HttpStatusCode statusCode = TestConfiguration(new QRSRequest(configManager.Configuration));
+				if (statusCode == HttpStatusCode.OK)
+				{
+					_logger.Log(statusCode.ToString() + " returned. Validation successful.", LogLevel.Debug);
+					return 0;
+				}
+				else
+				{
+					_logger.Log(statusCode.ToString() + " returned. Failed to get valid response from Qlik Sense Repository.", LogLevel.Error);
+					return 1;
+				}
+			}
+			else if (_argsManager.InitializeRun)
 			{
 				ConfigurationManager configManager = new ConfigurationManager(_logger, pwd);
 				if (!configManager.HasConfiguration)
@@ -85,14 +102,13 @@ namespace qs_telemetry_dashboard
 					string hostname = GetHostname();
 					configManager.SetConfig(hostname, FetchCertificate(creds));
 				}
-				_qrsRequest = new QRSRequest(configManager.Configuration);
-				return InitializeEnvironment.Run(_logger, _qrsRequest);
+				InitializeEnvironment initEnv = new InitializeEnvironment(_logger, new QRSRequest(configManager.Configuration), pwd);
+				return initEnv.Run();
 			}
-			else if (_argsManager.MetadataFetch)
+			else if (_argsManager.MetadataFetchRun)
 			{
 				ConfigurationManager configManager = new ConfigurationManager(_logger, pwd);
-				_qrsRequest = new QRSRequest(configManager.Configuration);
-				return MetadataFetchRunner.Run(_logger, _qrsRequest);
+				return MetadataFetchRunner.Run(_logger, new QRSRequest(configManager.Configuration));
 				// fetch metadata and wriet to csv
 			}
 			else
@@ -104,20 +120,20 @@ namespace qs_telemetry_dashboard
 
 		private static int TestCredentialRun()
 		{
-			_configuration = new TelemetryConfiguration();
-			_configuration.Hostname = "localhost";
+			TelemetryConfiguration configuration = new TelemetryConfiguration();
+			configuration.Hostname = "localhost";
 			_logger.Log("Test Credential Mode", LogLevel.Debug);
 			QlikCredentials creds = GetCredentials();
 			_logger.Log(string.Format("Credentials entered, attempting to fetch Qlik client certificate with user {0}\\{1}.", creds.UserDirectory, creds.UserName), LogLevel.Debug);
-			_configuration.QlikClientCertificate = FetchCertificate(creds);
-			if (_configuration.QlikClientCertificate == null)
+			configuration.QlikClientCertificate = FetchCertificate(creds);
+			if (configuration.QlikClientCertificate == null)
 			{
 				_logger.Log("Failed to fetch certificate.", LogLevel.Error);
 				return 1;
 			}
 			_logger.Log("Successfully got Qlik client certificates.", LogLevel.Debug);
 			_logger.Log("Querying Qlik Sense Repository GET '\\qrs\\about'", LogLevel.Debug);
-			HttpStatusCode statusCode = TestConfiguration();
+			HttpStatusCode statusCode = TestConfiguration(new QRSRequest(configuration));
 			if (statusCode == HttpStatusCode.OK)
 			{
 				_logger.Log(statusCode.ToString() + " returned. Validation successful.", LogLevel.Debug);
@@ -214,10 +230,9 @@ namespace qs_telemetry_dashboard
 			return cert;
 		}
 
-		private static HttpStatusCode TestConfiguration()
+		private static HttpStatusCode TestConfiguration(QRSRequest qrsRequest)
 		{
-			_qrsRequest = new QRSRequest(_configuration);
-			Tuple<HttpStatusCode, string> response = _qrsRequest.MakeRequest("/about", HttpMethod.Get);
+			Tuple<HttpStatusCode, string> response = qrsRequest.MakeRequest("/about", HttpMethod.Get);
 			return response.Item1;
 		}
 	}
