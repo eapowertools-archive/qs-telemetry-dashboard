@@ -1,11 +1,6 @@
-﻿using qs_telemetry_dashboard.Logging;
+﻿using System.Security.Cryptography.X509Certificates;
+
 using qs_telemetry_dashboard.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security.Cryptography.X509Certificates;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace qs_telemetry_dashboard.Initialize
 {

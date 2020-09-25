@@ -1,10 +1,7 @@
-﻿using qs_telemetry_dashboard.Logging;
+﻿using System;
+
+using qs_telemetry_dashboard.Logging;
 using qs_telemetry_dashboard.QRSHelpers;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace qs_telemetry_dashboard.MetadataFetch
 {
