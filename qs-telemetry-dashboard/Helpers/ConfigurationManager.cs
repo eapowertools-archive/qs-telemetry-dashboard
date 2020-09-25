@@ -2,7 +2,7 @@
 
 using qs_telemetry_dashboard.Models;
 
-namespace qs_telemetry_dashboard.Initialize
+namespace qs_telemetry_dashboard.Helpers
 {
 	internal class ConfigurationManager
 	{

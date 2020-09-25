@@ -45,7 +45,7 @@
     <Compile Include="Exceptions\ArgumentManagerException.cs" />
     <Compile Include="Exceptions\LoggingException.cs" />
     <Compile Include="Helpers\CertificateHelpers.cs" />
-    <Compile Include="Initialize\ConfigurationManager.cs" />
+    <Compile Include="Helpers\ConfigurationManager.cs" />
     <Compile Include="Initialize\InitializeEnvironment.cs" />
     <Compile Include="Helpers\IOHelpers.cs" />
     <Compile Include="MetadataFetch\MetadataFetchRunner.cs" />
