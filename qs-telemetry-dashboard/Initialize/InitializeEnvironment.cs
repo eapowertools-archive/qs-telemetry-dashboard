@@ -17,20 +17,18 @@ namespace qs_telemetry_dashboard.Initialize
 {
 	internal class InitializeEnvironment
 	{
-		private readonly Logger _logger;
 		private readonly QRSRequest _qrsRequest;
 		private readonly string WORKING_DIRECTORY;
 
-		internal InitializeEnvironment(Logger logger, QRSRequest qrsRequest, string pwd)
+		internal InitializeEnvironment(QRSRequest qrsRequest, string pwd)
 		{
-			_logger = logger;
 			_qrsRequest = qrsRequest;
 			WORKING_DIRECTORY = pwd;
 		}
 		internal int Run()
 		{
 			//todo this is sloppy. should be encapsulated or nonstatic
-			_logger.Log("Running in initialize mode.", LogLevel.Info);
+			TelemetryDashboardMain.Logger.Log("Running in initialize mode.", LogLevel.Info);
 
 
 

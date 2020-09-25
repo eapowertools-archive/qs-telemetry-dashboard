@@ -1,12 +1,7 @@
-﻿using qs_telemetry_dashboard.Exceptions;
-using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
-using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
-using System.Xml.Xsl;
+
+using qs_telemetry_dashboard.Exceptions;
 
 namespace qs_telemetry_dashboard
 {
@@ -29,22 +24,31 @@ Arguments:
 --help				Show help
 --fetchMetadata		";
 
-		public ArgumentManager(string[] args)
+		public ArgumentManager(string[] args, bool isComandLineRun)
 		{
 			Interactive = true;
+			NoArgs = false;
+			DebugLog = false;
+			TestConfigurationRun = false;
+			TestCredentialRun = false;
+			UpdateCertificateRun = false;
+			InitializeRun = false;
+			MetadataFetchRun = false;
+
 			if (args.Length == 0)
 			{
-				NoArgs = true;
+				if (isComandLineRun)
+				{
+					NoArgs = true;
+				}
+				else
+				{
+					Interactive = false;
+					InitializeRun = true;
+				}
 			}
 			else
 			{
-				NoArgs = false;
-				MetadataFetchRun = false;
-				DebugLog = false;
-				TestCredentialRun = false;
-				UpdateCertificateRun = false;
-				InitializeRun = false;
-
 				Dictionary<string, string> argDic = args.ToDictionary(
 					x => {
 						if (x.Contains('='))

@@ -1,13 +1,7 @@
 ﻿using System;
 using System.IO;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Data;
+
 using qs_telemetry_dashboard.Exceptions;
-using System.Collections.Concurrent;
-using System.Threading;
 
 namespace qs_telemetry_dashboard.Logging
 {
@@ -23,7 +17,7 @@ namespace qs_telemetry_dashboard.Logging
 		Debug
 	}
 
-	internal class Logger
+	internal class TelemetryLogger
 	{
 		private static string LOGFILENAME = "log";
 		private readonly string _logFileFullPath = "";
@@ -31,7 +25,7 @@ namespace qs_telemetry_dashboard.Logging
 		private readonly LogLevel _logLevel;
 		private int _ticker;
 
-		public Logger(string logFilePath, LogLocation logLocation, LogLevel level)
+		public TelemetryLogger(string logFilePath, LogLocation logLocation, LogLevel level)
 		{
 			_logFileFullPath = Path.Combine(logFilePath, LOGFILENAME+".txt");
 			_logLocation = logLocation;

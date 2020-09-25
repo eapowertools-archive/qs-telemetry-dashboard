@@ -11,14 +11,12 @@ namespace qs_telemetry_dashboard.Initialize
 {
 	internal class ConfigurationManager
 	{
-		private readonly Logger _logger;
 		private readonly string WORKING_DIRECTORY;
 		internal bool HasConfiguration { get; private set; }
 		internal TelemetryConfiguration Configuration { get; private set; }
 
-		internal ConfigurationManager(Logger logger, string pwd)
+		internal ConfigurationManager(string pwd)
 		{
-			_logger = logger;
 			WORKING_DIRECTORY = pwd;
 
 			//try to get config, if you do, set config and set has config to true, else, false
