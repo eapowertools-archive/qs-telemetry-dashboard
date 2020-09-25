@@ -1,17 +1,6 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using qs_telemetry_dashboard.Helpers;
 using qs_telemetry_dashboard.Logging;
-using qs_telemetry_dashboard.Models;
-using qs_telemetry_dashboard.QRSHelpers;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Net;
-using System.Net.Http;
-using System.Security.Cryptography.X509Certificates;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
+
 
 namespace qs_telemetry_dashboard.Initialize
 {

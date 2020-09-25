@@ -4,7 +4,7 @@ using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 
-namespace qs_telemetry_dashboard.QRSHelpers
+namespace qs_telemetry_dashboard.Helpers
 {
 	internal enum HTTPContentType
 	{

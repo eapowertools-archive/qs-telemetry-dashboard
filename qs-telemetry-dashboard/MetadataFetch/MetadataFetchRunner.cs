@@ -1,7 +1,6 @@
 ﻿using System;
-
+using qs_telemetry_dashboard.Helpers;
 using qs_telemetry_dashboard.Logging;
-using qs_telemetry_dashboard.QRSHelpers;
 
 namespace qs_telemetry_dashboard.MetadataFetch
 {

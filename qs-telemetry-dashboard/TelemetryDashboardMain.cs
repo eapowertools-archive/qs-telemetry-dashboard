@@ -9,7 +9,6 @@ using qs_telemetry_dashboard.Initialize;
 using qs_telemetry_dashboard.Logging;
 using qs_telemetry_dashboard.MetadataFetch;
 using qs_telemetry_dashboard.Models;
-using qs_telemetry_dashboard.QRSHelpers;
 
 namespace qs_telemetry_dashboard
 {

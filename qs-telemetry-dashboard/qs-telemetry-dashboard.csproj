@@ -58,7 +58,7 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-    <Compile Include="QRSHelpers\QRSRequest.cs" />
+    <Compile Include="Helpers\QRSRequest.cs" />
     <Compile Include="TelemetryDashboardMain.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
