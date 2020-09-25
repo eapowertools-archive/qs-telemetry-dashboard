@@ -32,6 +32,9 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="Newtonsoft.Json, Version=12.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <HintPath>..\packages\Newtonsoft.Json.12.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
@@ -46,6 +49,7 @@
     <Compile Include="Exceptions\LoggingException.cs" />
     <Compile Include="Helpers\CertificateHelpers.cs" />
     <Compile Include="Helpers\ConfigurationManager.cs" />
+    <Compile Include="Helpers\FileLocationManager.cs" />
     <Compile Include="Initialize\InitializeEnvironment.cs" />
     <Compile Include="Helpers\IOHelpers.cs" />
     <Compile Include="MetadataFetch\MetadataFetchRunner.cs" />
@@ -58,12 +62,13 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-    <Compile Include="Helpers\QRSRequest.cs" />
+    <Compile Include="Helpers\QlikRepositoryRequester.cs" />
     <Compile Include="TelemetryDashboardMain.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+    <None Include="app.manifest" />
     <None Include="packages.config" />
     <None Include="Resources\Telemetry Dashboard.qvf" />
   </ItemGroup>

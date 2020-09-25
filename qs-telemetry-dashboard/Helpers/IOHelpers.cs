@@ -58,13 +58,5 @@ namespace qs_telemetry_dashboard.Helpers
 			password.MakeReadOnly();
 			return password;
 		}
-
-		internal static string GetHostname()
-		{
-			Console.Write("Central node hostname: ");
-			string hostname = Console.ReadLine();
-			TelemetryDashboardMain.Logger.Log("Hostname entered: '" + hostname + "'.", LogLevel.Info);
-			return hostname;
-		}
 	}
 }

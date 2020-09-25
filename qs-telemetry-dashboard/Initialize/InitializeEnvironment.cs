@@ -1,18 +1,19 @@
-﻿using qs_telemetry_dashboard.Helpers;
-using qs_telemetry_dashboard.Logging;
+﻿using System;
+using System.IO;
+using System.Text;
 
+using qs_telemetry_dashboard.Helpers;
+using qs_telemetry_dashboard.Logging;
 
 namespace qs_telemetry_dashboard.Initialize
 {
 	internal class InitializeEnvironment
 	{
-		private readonly QRSRequest _qrsRequest;
-		private readonly string WORKING_DIRECTORY;
+		private readonly QlikRepositoryRequester _qrsRequest;
 
-		internal InitializeEnvironment(QRSRequest qrsRequest, string pwd)
+		internal InitializeEnvironment(QlikRepositoryRequester qrsRequest, string pwd)
 		{
 			_qrsRequest = qrsRequest;
-			WORKING_DIRECTORY = pwd;
 		}
 		internal int Run()
 		{
@@ -24,12 +25,20 @@ namespace qs_telemetry_dashboard.Initialize
 			return 0;
 		}
 
+		internal static string GetHostname()
+		{
+			string hostnameBase64 = File.ReadAllText(@"C:\ProgramData\Qlik\Sense\Host.cfg");
+			byte[] data = Convert.FromBase64String(hostnameBase64);
+			string hostname = Encoding.ASCII.GetString(data);
+			return hostname;
+		}
 
 
 
 
 
-			private static string OUTPUT_FOLDER = "TelemetryDashboard";
+
+		private static string OUTPUT_FOLDER = "TelemetryDashboard";
 			private static string JS_LIBRARY_FOLDER = "MetadataGenerater";
 			private static string METADATA_OUTPUT = "MetadataOutput";
 

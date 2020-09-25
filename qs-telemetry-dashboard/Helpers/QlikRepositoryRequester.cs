@@ -12,11 +12,11 @@ namespace qs_telemetry_dashboard.Helpers
 		app
 	}
 
-	internal class QRSRequest
+	internal class QlikRepositoryRequester
 	{
 		private readonly TelemetryConfiguration _configuration;
 
-		public QRSRequest(TelemetryConfiguration config)
+		public QlikRepositoryRequester(TelemetryConfiguration config)
 		{
 			_configuration = config;
 		}

@@ -21,6 +21,8 @@ namespace qs_telemetry_dashboard
 
 		internal static ArgumentManager ArgsManager { get; private set; }
 
+		internal static QlikRepositoryRequester QRSRequest { get; private set; }
+
 		static int Main(string[] args)
 		{
 			bool isCMDRun = GetConsoleProcessList(new uint[1], 1) == 2;
@@ -34,7 +36,6 @@ namespace qs_telemetry_dashboard
 				return 1;
 			}
 
-			string pwd = AppDomain.CurrentDomain.BaseDirectory;
 			LogLocation location = LogLocation.File;
 			LogLevel level = LogLevel.Info;
 			if (ArgsManager.Interactive)
@@ -48,7 +49,7 @@ namespace qs_telemetry_dashboard
 
 			try
 			{
-				Logger = new TelemetryLogger(pwd, location, level);
+				Logger = new TelemetryLogger(FileLocationManager.WorkingDirectory, location, level);
 			}
 			catch (LoggingException logException)
 			{
@@ -60,7 +61,7 @@ namespace qs_telemetry_dashboard
 				return 1;
 			}
 			Logger.Log("Arguments handled and logging initialized.", LogLevel.Info);
-			Logger.Log("Current working directory: " + pwd, LogLevel.Debug);
+			Logger.Log("Current working directory: " + FileLocationManager.WorkingDirectory, LogLevel.Debug);
 
 			if (ArgsManager.TestCredentialRun)
 			{
@@ -70,10 +71,13 @@ namespace qs_telemetry_dashboard
 			// wrap stuff in try catches and catch exceptions
 			else if (ArgsManager.UpdateCertificateRun)
 			{
-				ConfigurationManager configManager = new ConfigurationManager(pwd);
 				QlikCredentials creds = IOHelpers.GetCredentials();
-				string hostname = IOHelpers.GetHostname();
-				configManager.SetConfig(hostname, CertificateHelpers.FetchCertificate(creds));
+				TelemetryConfiguration tConfig = new TelemetryConfiguration();
+				tConfig.QlikClientCertificate = CertificateHelpers.FetchCertificate(creds);
+				tConfig.Hostname = InitializeEnvironment.GetHostname();
+
+				
+				ConfigurationManager.SaveConfiguration(tConfig);
 				return 0;
 			}
 			else if (ArgsManager.TestConfigurationRun)
@@ -84,7 +88,7 @@ namespace qs_telemetry_dashboard
 					Logger.Log("Failed to get configuration. Unable to test configuration. Test failed.", LogLevel.Error);
 					return 1;
 				}
-				HttpStatusCode statusCode = TestConfiguration(new QRSRequest(configManager.Configuration));
+				HttpStatusCode statusCode = TestConfiguration(new QlikRepositoryRequester(configManager.Configuration));
 				if (statusCode == HttpStatusCode.OK)
 				{
 					Logger.Log(statusCode.ToString() + " returned. Validation successful.", LogLevel.Debug);
@@ -105,13 +109,13 @@ namespace qs_telemetry_dashboard
 					string hostname = IOHelpers.GetHostname();
 					configManager.SetConfig(hostname, CertificateHelpers.FetchCertificate(creds));
 				}
-				InitializeEnvironment initEnv = new InitializeEnvironment(new QRSRequest(configManager.Configuration), pwd);
+				InitializeEnvironment initEnv = new InitializeEnvironment(new QlikRepositoryRequester(configManager.Configuration), pwd);
 				return initEnv.Run();
 			}
 			else if (ArgsManager.MetadataFetchRun)
 			{
 				ConfigurationManager configManager = new ConfigurationManager(pwd);
-				return MetadataFetchRunner.Run(Logger, new QRSRequest(configManager.Configuration));
+				return MetadataFetchRunner.Run(Logger, new QlikRepositoryRequester(configManager.Configuration));
 				// fetch metadata and wriet to csv
 			}
 			else
@@ -136,7 +140,7 @@ namespace qs_telemetry_dashboard
 			}
 			Logger.Log("Successfully got Qlik client certificates.", LogLevel.Debug);
 			Logger.Log("Querying Qlik Sense Repository GET '\\qrs\\about'", LogLevel.Debug);
-			HttpStatusCode statusCode = TestConfiguration(new QRSRequest(configuration));
+			HttpStatusCode statusCode = TestConfiguration(new QlikRepositoryRequester(configuration));
 			if (statusCode == HttpStatusCode.OK)
 			{
 				Logger.Log(statusCode.ToString() + " returned. Validation successful.", LogLevel.Debug);
@@ -157,7 +161,7 @@ namespace qs_telemetry_dashboard
 
 
 
-		private static HttpStatusCode TestConfiguration(QRSRequest qrsRequest)
+		private static HttpStatusCode TestConfiguration(QlikRepositoryRequester qrsRequest)
 		{
 			Tuple<HttpStatusCode, string> response = qrsRequest.MakeRequest("/about", HttpMethod.Get);
 			return response.Item1;
