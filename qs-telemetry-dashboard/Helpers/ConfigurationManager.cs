@@ -7,18 +7,11 @@ namespace qs_telemetry_dashboard.Helpers
 {
 	internal class ConfigurationManager
 	{
-		internal bool HasConfiguration { get; private set; }
-		internal TelemetryConfiguration Configuration { get; private set; }
-
-		internal void SetConfig(string hostname, X509Certificate2 creds)
+		internal static void SaveConfiguration(TelemetryConfiguration tConfig)
 		{
-			// use credentials to run impersonation and set config. save config to file
-		}
+			string configPath = FileLocationManager.GetConfigurationPath();
 
-        internal static void SaveConfiguration(TelemetryConfiguration tConfig)
-        {
-			// write this function
-            throw new NotImplementedException();
-        }
-    }
+			// todo save tconfig object to config path
+		}
+	}
 }

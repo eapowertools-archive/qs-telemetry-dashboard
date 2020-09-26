@@ -21,7 +21,18 @@ namespace qs_telemetry_dashboard
 
 		internal static ArgumentManager ArgsManager { get; private set; }
 
-		internal static QlikRepositoryRequester QRSRequest { get; private set; }
+		internal static QlikRepositoryRequester QRSRequest {
+			get
+			{
+				if (_qrsInstance == null)
+				{
+					throw new InvalidOperationException("QlikRepositoryRequester instance has not been initialized.");
+				}
+				return _qrsInstance;
+			}
+		}
+
+		private static QlikRepositoryRequester _qrsInstance;
 
 		static int Main(string[] args)
 		{
@@ -71,12 +82,12 @@ namespace qs_telemetry_dashboard
 			// wrap stuff in try catches and catch exceptions
 			else if (ArgsManager.UpdateCertificateRun)
 			{
+				// doneish, needs to be testing and logged
 				QlikCredentials creds = IOHelpers.GetCredentials();
 				TelemetryConfiguration tConfig = new TelemetryConfiguration();
 				tConfig.QlikClientCertificate = CertificateHelpers.FetchCertificate(creds);
 				tConfig.Hostname = InitializeEnvironment.GetHostname();
-
-				
+				_qrsInstance = new QlikRepositoryRequester(tConfig);
 				ConfigurationManager.SaveConfiguration(tConfig);
 				return 0;
 			}
