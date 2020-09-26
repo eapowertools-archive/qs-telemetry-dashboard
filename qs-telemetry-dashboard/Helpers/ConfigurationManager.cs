@@ -1,4 +1,5 @@
-﻿using System.Security.Cryptography.X509Certificates;
+﻿using System;
+using System.Security.Cryptography.X509Certificates;
 
 using qs_telemetry_dashboard.Models;
 
@@ -13,5 +14,11 @@ namespace qs_telemetry_dashboard.Helpers
 		{
 			// use credentials to run impersonation and set config. save config to file
 		}
-	}
+
+        internal static void SaveConfiguration(TelemetryConfiguration tConfig)
+        {
+			// write this function
+            throw new NotImplementedException();
+        }
+    }
 }
