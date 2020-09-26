@@ -9,13 +9,7 @@ namespace qs_telemetry_dashboard.Initialize
 {
 	internal class InitializeEnvironment
 	{
-		private readonly QlikRepositoryRequester _qrsRequest;
-
-		internal InitializeEnvironment(QlikRepositoryRequester qrsRequest, string pwd)
-		{
-			_qrsRequest = qrsRequest;
-		}
-		internal int Run()
+		internal static int Run()
 		{
 			//todo this is sloppy. should be encapsulated or nonstatic
 			TelemetryDashboardMain.Logger.Log("Running in initialize mode.", LogLevel.Info);

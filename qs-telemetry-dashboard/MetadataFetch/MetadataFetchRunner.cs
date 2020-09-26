@@ -6,7 +6,7 @@ namespace qs_telemetry_dashboard.MetadataFetch
 {
 	internal class MetadataFetchRunner
 	{
-		internal static int Run(TelemetryLogger logger, QlikRepositoryRequester qrsRequest)
+		internal static int Run()
 		{
 			throw new NotImplementedException();
 		}

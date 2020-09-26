@@ -93,13 +93,26 @@ namespace qs_telemetry_dashboard
 			}
 			else if (ArgsManager.TestConfigurationRun)
 			{
-				ConfigurationManager configManager = new ConfigurationManager(pwd);
-				if (!configManager.HasConfiguration)
+				// try to load from file.
+				// validate you could get the config file
+				TelemetryConfiguration tConfig;
+				if (!ConfigurationManager.HasConfiguration)
 				{
-					Logger.Log("Failed to get configuration. Unable to test configuration. Test failed.", LogLevel.Error);
-					return 1;
+					Logger.Log("Failed to get configuration from '" + FileLocationManager.WorkingDirectory + "'. Will need user credentials.", LogLevel.Info);
+					QlikCredentials creds = IOHelpers.GetCredentials();
+					tConfig = new TelemetryConfiguration();
+					tConfig.QlikClientCertificate = CertificateHelpers.FetchCertificate(creds);
+					tConfig.Hostname = InitializeEnvironment.GetHostname();
+					_qrsInstance = new QlikRepositoryRequester(tConfig);
+					tConfig = ConfigurationManager.GetConfiguration(false);
 				}
-				HttpStatusCode statusCode = TestConfiguration(new QlikRepositoryRequester(configManager.Configuration));
+				else
+				{
+					tConfig = ConfigurationManager.GetConfiguration(true);
+				}
+				_qrsInstance = new QlikRepositoryRequester(tConfig);
+
+				HttpStatusCode statusCode = TestConfiguration();
 				if (statusCode == HttpStatusCode.OK)
 				{
 					Logger.Log(statusCode.ToString() + " returned. Validation successful.", LogLevel.Debug);
@@ -113,20 +126,22 @@ namespace qs_telemetry_dashboard
 			}
 			else if (ArgsManager.InitializeRun)
 			{
-				ConfigurationManager configManager = new ConfigurationManager(pwd);
-				if (!configManager.HasConfiguration)
-				{
-					QlikCredentials creds = IOHelpers.GetCredentials();
-					string hostname = IOHelpers.GetHostname();
-					configManager.SetConfig(hostname, CertificateHelpers.FetchCertificate(creds));
-				}
-				InitializeEnvironment initEnv = new InitializeEnvironment(new QlikRepositoryRequester(configManager.Configuration), pwd);
-				return initEnv.Run();
+				// validate they want to proceed, will overwrite all existing setup
+
+				QlikCredentials creds = IOHelpers.GetCredentials();
+				TelemetryConfiguration tConfig = new TelemetryConfiguration();
+				tConfig.QlikClientCertificate = CertificateHelpers.FetchCertificate(creds);
+				tConfig.Hostname = InitializeEnvironment.GetHostname();
+				ConfigurationManager.SaveConfiguration(tConfig);
+
+				// todo copy telemetrydashboard to correct folder
+
+				return InitializeEnvironment.Run();
 			}
 			else if (ArgsManager.MetadataFetchRun)
 			{
-				ConfigurationManager configManager = new ConfigurationManager(pwd);
-				return MetadataFetchRunner.Run(Logger, new QlikRepositoryRequester(configManager.Configuration));
+				// is it interactive or not, depends if config should exist or not. log accordingly
+				return MetadataFetchRunner.Run();
 				// fetch metadata and wriet to csv
 			}
 			else
@@ -151,7 +166,8 @@ namespace qs_telemetry_dashboard
 			}
 			Logger.Log("Successfully got Qlik client certificates.", LogLevel.Debug);
 			Logger.Log("Querying Qlik Sense Repository GET '\\qrs\\about'", LogLevel.Debug);
-			HttpStatusCode statusCode = TestConfiguration(new QlikRepositoryRequester(configuration));
+			_qrsInstance = new QlikRepositoryRequester(configuration);
+			HttpStatusCode statusCode = TestConfiguration();
 			if (statusCode == HttpStatusCode.OK)
 			{
 				Logger.Log(statusCode.ToString() + " returned. Validation successful.", LogLevel.Debug);
@@ -164,17 +180,9 @@ namespace qs_telemetry_dashboard
 			}
 		}
 
-
-
-
-
-
-
-
-
-		private static HttpStatusCode TestConfiguration(QlikRepositoryRequester qrsRequest)
+		private static HttpStatusCode TestConfiguration()
 		{
-			Tuple<HttpStatusCode, string> response = qrsRequest.MakeRequest("/about", HttpMethod.Get);
+			Tuple<HttpStatusCode, string> response = TelemetryDashboardMain.QRSRequest.MakeRequest("/about", HttpMethod.Get);
 			return response.Item1;
 		}
 	}
