@@ -21,7 +21,7 @@ namespace qs_telemetry_dashboard.Initialize
 				{
 					string hostnameBase64 = File.ReadAllText(@"C:\ProgramData\Qlik\Sense\Host.cfg");
 					byte[] data = Convert.FromBase64String(hostnameBase64);
-					string _hostname = Encoding.ASCII.GetString(data);
+					_hostname = Encoding.ASCII.GetString(data);
 				}
 				return _hostname;
 			}

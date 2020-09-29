@@ -23,7 +23,7 @@ namespace qs_telemetry_dashboard.Helpers
 
 		internal static void SaveConfiguration(TelemetryConfiguration tConfig)
 		{
-			string configPath = FileLocationManager.GetConfigurationPath();
+			string configPath = FileLocationManager.GetTelemetrySharePath();
 
 			// todo save tconfig object to config path
 			// overwrite file in place
