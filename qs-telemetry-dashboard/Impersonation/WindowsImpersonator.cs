@@ -1,19 +1,20 @@
 ﻿using System;
 using System.Runtime.InteropServices;
+using System.Security;
 using System.Security.Principal;
 
-namespace qs_telemetry_dashboard.CertificateFetch
+namespace qs_telemetry_dashboard.Impersonation
 {
 	internal class WindowsImpersonator : IDisposable
 	{
-		public WindowsImpersonator(string userName, string domain, string password)
+		public WindowsImpersonator(string userName, string domain, SecureString password)
 		{
 			impersonateValidUser(userName, domain, password);
 		}
 
 		public void Dispose()
 		{
-			//undoImpersonation();
+			undoImpersonation();
 		}
 
 		public const int LOGON32_LOGON_SERVICE = 5;
@@ -21,17 +22,11 @@ namespace qs_telemetry_dashboard.CertificateFetch
 
 		WindowsImpersonationContext impersonationContext;
 
-		[DllImport("advapi32.dll")]
-		public static extern int LogonUserA(String lpszUserName,
-		String lpszDomain,
-		String lpszPassword,
-		int dwLogonType,
-		int dwLogonProvider,
-		ref IntPtr phToken);
+		[DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+		internal static extern bool LogonUser(String username, String domain, IntPtr password, int logonType, int logonProvider, ref IntPtr token);
+
 		[DllImport("advapi32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-		public static extern int DuplicateToken(IntPtr hToken,
-		int impersonationLevel,
-		ref IntPtr hNewToken);
+		public static extern int DuplicateToken(IntPtr hToken, int impersonationLevel, ref IntPtr hNewToken);
 
 		[DllImport("advapi32.dll", CharSet = CharSet.Auto, SetLastError = true)]
 		public static extern bool RevertToSelf();
@@ -39,29 +34,20 @@ namespace qs_telemetry_dashboard.CertificateFetch
 		[DllImport("kernel32.dll", CharSet = CharSet.Auto)]
 		public static extern bool CloseHandle(IntPtr handle);
 
-		public void Page_Load(Object s, EventArgs e)
-		{
-			if (impersonateValidUser("username", "domain", "password"))
-			{
-				//Insert your code that runs under the security context of a specific user here.
-				undoImpersonation();
-			}
-			else
-			{
-				//Your impersonation failed. Therefore, include a fail-safe mechanism here.
-			}
-		}
-
-		private bool impersonateValidUser(String userName, String domain, String password)
+		private bool impersonateValidUser(String userName, String domain, SecureString password)
 		{
 			WindowsIdentity tempWindowsIdentity;
 			IntPtr token = IntPtr.Zero;
 			IntPtr tokenDuplicate = IntPtr.Zero;
+			IntPtr passwordPtr = IntPtr.Zero;
 
 			if (RevertToSelf())
 			{
-				if (LogonUserA(userName, domain, password, LOGON32_LOGON_SERVICE,
-				LOGON32_PROVIDER_DEFAULT, ref token) != 0)
+				// Marshal the SecureString to unmanaged memory.
+				passwordPtr = Marshal.SecureStringToGlobalAllocUnicode(password);
+
+				if (LogonUser(userName, domain, passwordPtr, LOGON32_LOGON_SERVICE,
+				LOGON32_PROVIDER_DEFAULT, ref token))
 				{
 					if (DuplicateToken(token, 2, ref tokenDuplicate) != 0)
 					{
@@ -85,7 +71,10 @@ namespace qs_telemetry_dashboard.CertificateFetch
 
 		private void undoImpersonation()
 		{
-			impersonationContext.Undo();
+			if (impersonationContext != null)
+			{
+				impersonationContext.Undo();
+			}
 		}
 	}
 }
