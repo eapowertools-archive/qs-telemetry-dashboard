@@ -36,6 +36,7 @@ namespace qs_telemetry_dashboard.Initialize
 			}
 
 			// get location to copy exe to
+			string telemetryPath = FileLocationManager.GetTelemetrySharePath();
 
 			return 0;
 		}
@@ -60,7 +61,7 @@ namespace qs_telemetry_dashboard.Initialize
 
 		public string ImportApp()
 		{
-			Tuple<HttpStatusCode, string> apps = _qrsRequest.MakeRequest("/app/full?filter=name eq 'Telemetry Dashboard'", HttpMethod.Get);
+			Tuple<HttpStatusCode, string> apps = TelemetryDashboardMain.QRSRequest.MakeRequest("/app/full?filter=name eq 'Telemetry Dashboard'", HttpMethod.Get);
 			if (apps.Item1 != HttpStatusCode.OK)
 			{
 				return "Failure";
@@ -71,7 +72,7 @@ namespace qs_telemetry_dashboard.Initialize
 			if (listOfApps.Count == 1)
 			{
 				string appID = listOfApps[0]["id"].ToString();
-				Tuple<HttpStatusCode, string> replaceAppResponse = _qrsRequest.MakeRequest("/app/upload/replace?targetappid=" + appID, HttpMethod.Post, HTTPContentType.app, Properties.Resources.Telemetry_Dashboard);
+				Tuple<HttpStatusCode, string> replaceAppResponse = TelemetryDashboardMain.QRSRequest.MakeRequest("/app/upload/replace?targetappid=" + appID, HttpMethod.Post, HTTPContentType.app, Properties.Resources.Telemetry_Dashboard);
 				if (replaceAppResponse.Item1 == HttpStatusCode.Created)
 				{
 					return "Success";
@@ -87,7 +88,7 @@ namespace qs_telemetry_dashboard.Initialize
 						listOfApps[i]["name"] = listOfApps[i]["name"] + "-old";
 						listOfApps[i]["modifiedDate"] = DateTime.UtcNow.ToString("s") + "Z";
 						string appId = listOfApps[i]["id"].ToString();
-						Tuple<HttpStatusCode, string> updatedApp = _qrsRequest.MakeRequest("/app/" + appId, HttpMethod.Put, HTTPContentType.json, Encoding.UTF8.GetBytes(listOfApps[i].ToString()));
+						Tuple<HttpStatusCode, string> updatedApp = TelemetryDashboardMain.QRSRequest.MakeRequest("/app/" + appId, HttpMethod.Put, HTTPContentType.json, Encoding.UTF8.GetBytes(listOfApps[i].ToString()));
 						if (updatedApp.Item1 != HttpStatusCode.OK)
 						{
 							return "Failure";
@@ -95,7 +96,7 @@ namespace qs_telemetry_dashboard.Initialize
 					}
 				}
 
-				Tuple<HttpStatusCode, string> uploadAppResponse = _qrsRequest.MakeRequest("/app/upload?name=Telemetry Dashboard", HttpMethod.Post, HTTPContentType.app, Properties.Resources.Telemetry_Dashboard);
+				Tuple<HttpStatusCode, string> uploadAppResponse = TelemetryDashboardMain.QRSRequest.MakeRequest("/app/upload?name=Telemetry Dashboard", HttpMethod.Post, HTTPContentType.app, Properties.Resources.Telemetry_Dashboard);
 				if (uploadAppResponse.Item1 == HttpStatusCode.Created)
 				{
 					return "Success";
