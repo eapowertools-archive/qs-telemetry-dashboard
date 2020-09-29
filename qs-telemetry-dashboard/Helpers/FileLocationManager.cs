@@ -2,14 +2,17 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Net;
+using System.Net.Http;
+using Newtonsoft.Json.Linq;
 
 namespace qs_telemetry_dashboard.Helpers
 {
 	internal class FileLocationManager
 	{
 		internal static string TELEMETRY_FOLDER = "TelemetryDashboard";
+		internal static string TELEMETRY_OUTPUT_FOLDER = "output";
+		internal static string TELEMETRY_EXE_FILENAME = "TelemetryDashboard.exe";
 		internal static string WorkingDirectory
 		{
 			get
@@ -18,24 +21,28 @@ namespace qs_telemetry_dashboard.Helpers
 			}
 		}
 
-		internal static string GetConfigurationPath()
+		internal static string GetTelemetrySharePath()
 		{
+			Tuple<HttpStatusCode, string> response = TelemetryDashboardMain.QRSRequest.MakeRequest("/servicecluster/full", HttpMethod.Get);
+			if (response.Item1 != HttpStatusCode.OK)
+			{
+				throw new HttpRequestException(response.Item1.ToString() + " returned. Request failed.");
+			}
 
-			return "";
+			JArray listOfServiceClusters = JArray.Parse(response.Item2);
+
+			if (listOfServiceClusters.Count == 0)
+			{
+				throw new Exception("Tried to get service cluster information. Request returned but no data was found.");
+			}
+			else if (listOfServiceClusters.Count > 1)
+			{
+				throw new Exception("Got service cluster information. More than 1 service cluster was found.");
+			}
+
+			string shareRootPath = listOfServiceClusters[0]["settings"]["sharedPersistenceProperties"]["rootFolder"].ToString();
+
+			return Path.Combine(shareRootPath, TELEMETRY_FOLDER);
 		}
-		//internal static bool IsInQlikShare()
-		//{
-		//	DirectoryInfo di = Directory.GetParent(WorkingDirectory);
-		//	if (di.Name.ToLowerInvariant() == TELEMETRY_FOLDER.ToLowerInvariant())
-		//	{
-		//		string[] shareFolders = Directory.GetDirectories(di.Parent.FullName);
-		//		if ((shareFolders.Contains("Apps") && shareFolders.Contains("ArchivedLogs") && shareFolders.Contains("CustomData") && shareFolders.Contains("StaticContent")))
-		//		{
-		//			return true;
-		//		}
-
-		//	}
-		//	return false;
-		//}
 	}
 }

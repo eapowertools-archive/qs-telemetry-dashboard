@@ -86,7 +86,7 @@ namespace qs_telemetry_dashboard
 				QlikCredentials creds = IOHelpers.GetCredentials();
 				TelemetryConfiguration tConfig = new TelemetryConfiguration();
 				tConfig.QlikClientCertificate = CertificateHelpers.FetchCertificate(creds);
-				tConfig.Hostname = InitializeEnvironment.GetHostname();
+				tConfig.Hostname = InitializeEnvironment.Hostname;
 				_qrsInstance = new QlikRepositoryRequester(tConfig);
 				ConfigurationManager.SaveConfiguration(tConfig);
 				return 0;
@@ -102,7 +102,7 @@ namespace qs_telemetry_dashboard
 					QlikCredentials creds = IOHelpers.GetCredentials();
 					tConfig = new TelemetryConfiguration();
 					tConfig.QlikClientCertificate = CertificateHelpers.FetchCertificate(creds);
-					tConfig.Hostname = InitializeEnvironment.GetHostname();
+					tConfig.Hostname = InitializeEnvironment.Hostname;
 					_qrsInstance = new QlikRepositoryRequester(tConfig);
 					tConfig = ConfigurationManager.GetConfiguration(false);
 				}
@@ -131,8 +131,9 @@ namespace qs_telemetry_dashboard
 				QlikCredentials creds = IOHelpers.GetCredentials();
 				TelemetryConfiguration tConfig = new TelemetryConfiguration();
 				tConfig.QlikClientCertificate = CertificateHelpers.FetchCertificate(creds);
-				tConfig.Hostname = InitializeEnvironment.GetHostname();
+				tConfig.Hostname = InitializeEnvironment.Hostname;
 				ConfigurationManager.SaveConfiguration(tConfig);
+				_qrsInstance = new QlikRepositoryRequester(tConfig);
 
 				// todo copy telemetrydashboard to correct folder
 
