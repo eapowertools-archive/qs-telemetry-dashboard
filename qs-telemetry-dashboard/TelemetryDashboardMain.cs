@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Net;
 using System.Net.Http;
+using System.Reflection;
 using System.Runtime.InteropServices;
 
 using qs_telemetry_dashboard.Exceptions;
@@ -31,11 +32,27 @@ namespace qs_telemetry_dashboard
 				return _qrsInstance;
 			}
 		}
+		private static Assembly CurrentDomain_AssemblyResolve(object sender, ResolveEventArgs args)
+		{
+			using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("qs_telemetry_dashboard.ReferencedAssemblies.Newtonsoft.Json.dll"))
+			{
+				var assemblyData = new Byte[stream.Length];
+				stream.Read(assemblyData, 0, assemblyData.Length);
+				return Assembly.Load(assemblyData);
+			}
+		}
 
 		private static QlikRepositoryRequester _qrsInstance;
 
 		static int Main(string[] args)
 		{
+			AppDomain.CurrentDomain.AssemblyResolve += CurrentDomain_AssemblyResolve;
+
+			Console.WriteLine("Listing Embedded Resource Names");
+
+			foreach (var resource in Assembly.GetExecutingAssembly().GetManifestResourceNames())
+			{ Console.WriteLine("Resource: " + resource); }
+
 			bool isCMDRun = GetConsoleProcessList(new uint[1], 1) == 2;
 			try
 			{
@@ -74,7 +91,12 @@ namespace qs_telemetry_dashboard
 			Logger.Log("Arguments handled and logging initialized.", LogLevel.Info);
 			Logger.Log("Current working directory: " + FileLocationManager.WorkingDirectory, LogLevel.Debug);
 
-			if (ArgsManager.TestCredentialRun)
+			if (ArgsManager.NoArgs)
+			{
+				Console.WriteLine(ArgumentManager.HELP_STRING);
+				return 0;
+			}
+			else if (ArgsManager.TestCredentialRun)
 			{
 				// this one is done, but needs logging.
 				return TestCredentialRun();
@@ -126,17 +148,21 @@ namespace qs_telemetry_dashboard
 			}
 			else if (ArgsManager.InitializeRun)
 			{
+				Logger.Log("Initialize flag passed.", LogLevel.Info);
+
 				// validate they want to proceed, will overwrite all existing setup
 
 				QlikCredentials creds = IOHelpers.GetCredentials();
 				TelemetryConfiguration tConfig = new TelemetryConfiguration();
 				tConfig.QlikClientCertificate = CertificateHelpers.FetchCertificate(creds);
 				tConfig.Hostname = InitializeEnvironment.Hostname;
-				ConfigurationManager.SaveConfiguration(tConfig);
 				_qrsInstance = new QlikRepositoryRequester(tConfig);
 
-				// todo copy telemetrydashboard to correct folder
+				Logger.Log("Ready to save configuration.", LogLevel.Debug);
+				ConfigurationManager.SaveConfiguration(tConfig);
 
+				// todo copy telemetrydashboard to correct folder
+				Logger.Log("Starting initialize run.", LogLevel.Info);
 				return InitializeEnvironment.Run();
 			}
 			else if (ArgsManager.MetadataFetchRun)

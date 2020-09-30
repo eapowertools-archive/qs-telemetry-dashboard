@@ -30,13 +30,16 @@ namespace qs_telemetry_dashboard.Initialize
 		{
 			TelemetryDashboardMain.Logger.Log("Running in initialize mode.", LogLevel.Info);
 
-			if (!IsRepositoryRunning())
-			{
-				return 1;
-			}
+			//if (!IsRepositoryRunning())
+			//{
+			//	return 1;
+			//}
 
 			// get location to copy exe to
 			string telemetryPath = FileLocationManager.GetTelemetrySharePath();
+
+			TelemetryDashboardMain.Logger.Log("Ready to import app.", LogLevel.Debug);
+			ImportApp();
 
 			return 0;
 		}
@@ -59,7 +62,7 @@ namespace qs_telemetry_dashboard.Initialize
 			}
 		}
 
-		public string ImportApp()
+		private static string ImportApp()
 		{
 			Tuple<HttpStatusCode, string> apps = TelemetryDashboardMain.QRSRequest.MakeRequest("/app/full?filter=name eq 'Telemetry Dashboard'", HttpMethod.Get);
 			if (apps.Item1 != HttpStatusCode.OK)
