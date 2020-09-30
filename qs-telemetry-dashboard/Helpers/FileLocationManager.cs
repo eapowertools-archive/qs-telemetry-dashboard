@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using Newtonsoft.Json.Linq;
+using qs_telemetry_dashboard.Exceptions;
 
 namespace qs_telemetry_dashboard.Helpers
 {
@@ -26,7 +27,7 @@ namespace qs_telemetry_dashboard.Helpers
 			Tuple<HttpStatusCode, string> response = TelemetryDashboardMain.QRSRequest.MakeRequest("/servicecluster/full", HttpMethod.Get);
 			if (response.Item1 != HttpStatusCode.OK)
 			{
-				throw new HttpRequestException(response.Item1.ToString() + " returned. Request failed.");
+				throw new InvalidResponseException(response.Item1.ToString() + " returned when getting share path. Request failed.");
 			}
 
 			JArray listOfServiceClusters = JArray.Parse(response.Item2);
