@@ -1,4 +1,6 @@
 ﻿using System;
+using System.IO;
+using System.Runtime.Serialization.Formatters.Binary;
 using System.Security.Cryptography.X509Certificates;
 
 using qs_telemetry_dashboard.Models;
@@ -23,10 +25,17 @@ namespace qs_telemetry_dashboard.Helpers
 
 		internal static void SaveConfiguration(TelemetryConfiguration tConfig)
 		{
-			string configPath = FileLocationManager.GetTelemetrySharePath();
+			string configPath = Path.Combine(FileLocationManager.GetTelemetrySharePath(), FileLocationManager.TELEMETRY_CONFIG_FILENAME);
 
-			// todo save tconfig object to config path
-			// overwrite file in place
+			if (File.Exists(configPath))
+			{
+				File.Delete(configPath);
+			}
+
+			Stream SaveFileStream = File.Create(configPath);
+			BinaryFormatter serializer = new BinaryFormatter();
+			serializer.Serialize(SaveFileStream, tConfig);
+			SaveFileStream.Close();
 		}
 	}
 }

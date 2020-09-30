@@ -14,6 +14,7 @@ namespace qs_telemetry_dashboard.Helpers
 		internal static string TELEMETRY_FOLDER = "TelemetryDashboard";
 		internal static string TELEMETRY_OUTPUT_FOLDER = "output";
 		internal static string TELEMETRY_EXE_FILENAME = "TelemetryDashboard.exe";
+		internal static string TELEMETRY_CONFIG_FILENAME = "config.tdc";
 		internal static string WorkingDirectory
 		{
 			get
