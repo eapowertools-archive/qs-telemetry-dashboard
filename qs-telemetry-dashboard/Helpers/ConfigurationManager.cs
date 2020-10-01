@@ -2,7 +2,7 @@
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Security.Cryptography.X509Certificates;
-
+using qs_telemetry_dashboard.Logging;
 using qs_telemetry_dashboard.Models;
 
 namespace qs_telemetry_dashboard.Helpers
@@ -17,10 +17,24 @@ namespace qs_telemetry_dashboard.Helpers
 			}
 		}
 
-		internal static TelemetryConfiguration GetConfiguration(bool isInShare)
+		internal static bool TryGetConfiguration(out TelemetryConfiguration telemetryDashboardConfig)
 		{
+			string configPath = Path.Combine(FileLocationManager.WorkingDirectory, FileLocationManager.TELEMETRY_CONFIG_FILENAME);
+			TelemetryDashboardMain.Logger.Log("Trying to get config file: " + configPath, LogLevel.Debug);
+			if (!File.Exists(configPath))
+			{
+				TelemetryDashboardMain.Logger.Log("Failed to find file: " + configPath, LogLevel.Debug);
 
-			return new TelemetryConfiguration();
+				telemetryDashboardConfig = null;
+				return false;
+			}
+			TelemetryDashboardMain.Logger.Log("File found. Loading config.", LogLevel.Debug);
+
+			Stream openFileStream = File.OpenRead(configPath);
+			BinaryFormatter deserializer = new BinaryFormatter();
+			telemetryDashboardConfig = (TelemetryConfiguration)deserializer.Deserialize(openFileStream);
+			openFileStream.Close();
+			return true;
 		}
 
 		internal static void SaveConfiguration(TelemetryConfiguration tConfig)

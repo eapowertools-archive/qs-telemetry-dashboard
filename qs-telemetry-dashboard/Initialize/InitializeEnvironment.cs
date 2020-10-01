@@ -32,7 +32,13 @@ namespace qs_telemetry_dashboard.Initialize
 			TelemetryDashboardMain.Logger.Log("Running in initialize mode.", LogLevel.Info);
 
 			// get location to copy exe to
-			string telemetryPath = FileLocationManager.GetTelemetrySharePath();
+			string telemetryPath = Path.Combine(FileLocationManager.GetTelemetrySharePath(), FileLocationManager.TELEMETRY_EXE_FILENAME);
+			if (File.Exists(telemetryPath))
+			{
+				File.Delete(telemetryPath);
+			}
+			File.Copy(FileLocationManager.WorkingTelemetryDashboardExePath, telemetryPath);
+
 
 			TelemetryDashboardMain.Logger.Log("Ready to import app.", LogLevel.Debug);
 			string appGUID = ImportApp();
@@ -41,28 +47,12 @@ namespace qs_telemetry_dashboard.Initialize
 			CreateDataConnections();
 
 			TelemetryDashboardMain.Logger.Log("Ready to create tasks.", LogLevel.Debug);
-			CreateTasks(appGUID);
+			CreateTasks(appGUID, telemetryPath);
 
 			return 0;
 		}
 
-		private static bool IsRepositoryRunning()
-		{
-			TelemetryDashboardMain.Logger.Log("Checking to see if repository is running.", LogLevel.Info);
-			TelemetryDashboardMain.Logger.Log(string.Format("Sending request to 'https://{0}:4242'.", Hostname), LogLevel.Info);
 
-			Tuple<HttpStatusCode, string> response = TelemetryDashboardMain.QRSRequest.MakeRequest("/about", HttpMethod.Get);
-			if (response.Item1 == HttpStatusCode.OK)
-			{
-				TelemetryDashboardMain.Logger.Log("Repository responded with OK.", LogLevel.Info);
-				return true;
-			}
-			else
-			{
-				TelemetryDashboardMain.Logger.Log(string.Format("Repository responded with '{0}'. Body was: {1}", response.Item1.ToString(), response.Item2), LogLevel.Error);
-				return false;
-			}
-		}
 
 		private static string ImportApp()
 		{
@@ -181,10 +171,8 @@ namespace qs_telemetry_dashboard.Initialize
 			return;
 		}
 
-		private static void CreateTasks(string appId)
+		private static void CreateTasks(string appId, string telemetryDashboardPath)
 		{
-			string telemetryDashboardPath = Path.Combine(FileLocationManager.GetTelemetrySharePath(), FileLocationManager.TELEMETRY_EXE_FILENAME);
-
 			string externalTaskID = "";
 			// External Task
 			Tuple<HttpStatusCode, string> hasExternalTask = TelemetryDashboardMain.QRSRequest.MakeRequest("/externalprogramtask/count?filter=name eq 'TelemetryDashboard-1-Generate-Metadata'", HttpMethod.Get);
@@ -194,9 +182,11 @@ namespace qs_telemetry_dashboard.Initialize
 			}
 			if (JObject.Parse(hasExternalTask.Item2)["value"].ToObject<int>() == 0)
 			{
+				TelemetryDashboardMain.Logger.Log("No 'TelemetryDashboard-1-Generate-Metadata' was found. Creating new task.", LogLevel.Info);
+
 				string body = @"
 			{
-				'path': '" + telemetryDashboardPath + @"',
+				'path': '" + telemetryDashboardPath.Replace("\\", "\\\\") + @"',
 				'parameters': '-metadatafetch',
 				'name': 'TelemetryDashboard-1-Generate-Metadata',
 				'taskType': 1,
@@ -213,14 +203,18 @@ namespace qs_telemetry_dashboard.Initialize
 				}
 				else
 				{
+					TelemetryDashboardMain.Logger.Log("Task 'TelemetryDashboard-1-Generate-Metadata' was created.", LogLevel.Info);
 					externalTaskID = JObject.Parse(createExternalTask.Item2)["id"].ToString();
+					TelemetryDashboardMain.Logger.Log("Task 'TelemetryDashboard-1-Generate-Metadata' ID is: " + externalTaskID, LogLevel.Debug);
+
 				}
 			}
 			else
 			{
+				TelemetryDashboardMain.Logger.Log("Existing 'TelemetryDashboard-1-Generate-Metadata' was found.", LogLevel.Info);
 				Tuple<HttpStatusCode, string> getExternalTaskId = TelemetryDashboardMain.QRSRequest.MakeRequest("/externalprogramtask?filter=name eq 'TelemetryDashboard-1-Generate-Metadata'", HttpMethod.Get);
 				externalTaskID = JArray.Parse(getExternalTaskId.Item2)[0]["id"].ToString();
-
+				TelemetryDashboardMain.Logger.Log("Task 'TelemetryDashboard-1-Generate-Metadata' ID is: " + externalTaskID, LogLevel.Debug);
 			}
 
 			// Reload Task

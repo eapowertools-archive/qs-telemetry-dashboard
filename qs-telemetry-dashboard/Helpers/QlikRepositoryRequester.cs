@@ -1,4 +1,5 @@
-﻿using qs_telemetry_dashboard.Models;
+﻿using qs_telemetry_dashboard.Logging;
+using qs_telemetry_dashboard.Models;
 using System;
 using System.Net;
 using System.Net.Http;
@@ -109,6 +110,24 @@ namespace qs_telemetry_dashboard.Helpers
 			}
 
 			return new Tuple<HttpStatusCode, string>(responseCode, responseString);
+		}
+
+		private bool IsRepositoryRunning()
+		{
+			TelemetryDashboardMain.Logger.Log("Checking to see if repository is running.", LogLevel.Info);
+			TelemetryDashboardMain.Logger.Log(string.Format("Sending request to 'https://{0}:4242'.", _configuration.Hostname), LogLevel.Info);
+
+			Tuple<HttpStatusCode, string> response = TelemetryDashboardMain.QRSRequest.MakeRequest("/about", HttpMethod.Get);
+			if (response.Item1 == HttpStatusCode.OK)
+			{
+				TelemetryDashboardMain.Logger.Log("Repository responded with OK.", LogLevel.Info);
+				return true;
+			}
+			else
+			{
+				TelemetryDashboardMain.Logger.Log(string.Format("Repository responded with '{0}'. Body was: {1}", response.Item1.ToString(), response.Item2), LogLevel.Error);
+				return false;
+			}
 		}
 	}
 }
