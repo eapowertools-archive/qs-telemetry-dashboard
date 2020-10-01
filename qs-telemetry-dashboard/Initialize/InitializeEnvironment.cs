@@ -4,6 +4,7 @@ using System.Net;
 using System.Net.Http;
 using System.Text;
 using Newtonsoft.Json.Linq;
+using qs_telemetry_dashboard.Exceptions;
 using qs_telemetry_dashboard.Helpers;
 using qs_telemetry_dashboard.Logging;
 
@@ -21,7 +22,7 @@ namespace qs_telemetry_dashboard.Initialize
 				{
 					string hostnameBase64 = File.ReadAllText(@"C:\ProgramData\Qlik\Sense\Host.cfg");
 					byte[] data = Convert.FromBase64String(hostnameBase64);
-					string _hostname = Encoding.ASCII.GetString(data);
+					_hostname = Encoding.ASCII.GetString(data);
 				}
 				return _hostname;
 			}
@@ -30,12 +31,17 @@ namespace qs_telemetry_dashboard.Initialize
 		{
 			TelemetryDashboardMain.Logger.Log("Running in initialize mode.", LogLevel.Info);
 
-			if (!IsRepositoryRunning())
-			{
-				return 1;
-			}
-
 			// get location to copy exe to
+			string telemetryPath = FileLocationManager.GetTelemetrySharePath();
+
+			TelemetryDashboardMain.Logger.Log("Ready to import app.", LogLevel.Debug);
+			string appGUID = ImportApp();
+
+			TelemetryDashboardMain.Logger.Log("Ready to create data connections.", LogLevel.Debug);
+			CreateDataConnections();
+
+			TelemetryDashboardMain.Logger.Log("Ready to create tasks.", LogLevel.Debug);
+			CreateTasks(appGUID);
 
 			return 0;
 		}
@@ -58,12 +64,12 @@ namespace qs_telemetry_dashboard.Initialize
 			}
 		}
 
-		public string ImportApp()
+		private static string ImportApp()
 		{
-			Tuple<HttpStatusCode, string> apps = _qrsRequest.MakeRequest("/app/full?filter=name eq 'Telemetry Dashboard'", HttpMethod.Get);
+			Tuple<HttpStatusCode, string> apps = TelemetryDashboardMain.QRSRequest.MakeRequest("/app/full?filter=name eq 'Telemetry Dashboard'", HttpMethod.Get);
 			if (apps.Item1 != HttpStatusCode.OK)
 			{
-				return "Failure";
+				throw new InvalidResponseException(apps.Item1.ToString() + " returned checking Telemetry Dashboard app exists. Request failed.");
 			}
 
 			JArray listOfApps = JArray.Parse(apps.Item2);
@@ -71,342 +77,230 @@ namespace qs_telemetry_dashboard.Initialize
 			if (listOfApps.Count == 1)
 			{
 				string appID = listOfApps[0]["id"].ToString();
-				Tuple<HttpStatusCode, string> replaceAppResponse = _qrsRequest.MakeRequest("/app/upload/replace?targetappid=" + appID, HttpMethod.Post, HTTPContentType.app, Properties.Resources.Telemetry_Dashboard);
+				Tuple<HttpStatusCode, string> replaceAppResponse = TelemetryDashboardMain.QRSRequest.MakeRequest("/app/upload/replace?targetappid=" + appID, HttpMethod.Post, HTTPContentType.app, Properties.Resources.Telemetry_Dashboard);
 				if (replaceAppResponse.Item1 == HttpStatusCode.Created)
 				{
-					return "Success";
+					return JObject.Parse(replaceAppResponse.Item2)["id"].ToString();
+				}
+				else
+				{
+					throw new InvalidResponseException(apps.Item1.ToString() + " returned when trying to replace Telemetry Dashboard app. Request failed.");
 				}
 			}
 
-			else
+
+			if (listOfApps.Count > 1)
 			{
-				if (listOfApps.Count > 1)
+				for (int i = 0; i < listOfApps.Count; i++)
 				{
-					for (int i = 0; i < listOfApps.Count; i++)
+					listOfApps[i]["name"] = listOfApps[i]["name"] + "-old";
+					listOfApps[i]["modifiedDate"] = DateTime.UtcNow.ToString("s") + "Z";
+					string appId = listOfApps[i]["id"].ToString();
+					Tuple<HttpStatusCode, string> updatedApp = TelemetryDashboardMain.QRSRequest.MakeRequest("/app/" + appId, HttpMethod.Put, HTTPContentType.json, Encoding.UTF8.GetBytes(listOfApps[i].ToString()));
+					if (updatedApp.Item1 != HttpStatusCode.OK)
 					{
-						listOfApps[i]["name"] = listOfApps[i]["name"] + "-old";
-						listOfApps[i]["modifiedDate"] = DateTime.UtcNow.ToString("s") + "Z";
-						string appId = listOfApps[i]["id"].ToString();
-						Tuple<HttpStatusCode, string> updatedApp = _qrsRequest.MakeRequest("/app/" + appId, HttpMethod.Put, HTTPContentType.json, Encoding.UTF8.GetBytes(listOfApps[i].ToString()));
-						if (updatedApp.Item1 != HttpStatusCode.OK)
-						{
-							return "Failure";
-						}
+						throw new InvalidResponseException(apps.Item1.ToString() + " returned when trying to rename old Telemetry Dashboard apps. Request failed.");
 					}
 				}
-
-				Tuple<HttpStatusCode, string> uploadAppResponse = _qrsRequest.MakeRequest("/app/upload?name=Telemetry Dashboard", HttpMethod.Post, HTTPContentType.app, Properties.Resources.Telemetry_Dashboard);
-				if (uploadAppResponse.Item1 == HttpStatusCode.Created)
-				{
-					return "Success";
-				}
 			}
-			return "Failure";
+
+			Tuple<HttpStatusCode, string> uploadAppResponse = TelemetryDashboardMain.QRSRequest.MakeRequest("/app/upload?name=Telemetry Dashboard", HttpMethod.Post, HTTPContentType.app, Properties.Resources.Telemetry_Dashboard);
+			if (uploadAppResponse.Item1 != HttpStatusCode.Created)
+			{
+				throw new InvalidResponseException(apps.Item1.ToString() + " returned when trying to upload Telemetry Dashboard app. Request failed.");
+			}
+			return JObject.Parse(uploadAppResponse.Item2)["id"].ToString();
 		}
 
-		//public string CreateDataConnections()
-		//{
+		private static void CreateDataConnections()
+		{
 
-		//	// Add TelemetryMetadata dataconnection
-		//	Tuple<HttpStatusCode, string> dataConnections = TelemetryDashboardMain.QRSRequest.MakeRequest("/dataconnection?filter=name eq 'TelemetryMetadata'", HttpMethod.Get);
-		//	if (dataConnections.Item1 != HttpStatusCode.OK)
-		//	{
-		//		return "Failure";
-		//	}
-		//	JArray listOfDataconnections = JArray.Parse(dataConnections.Item2);
-		//	if (listOfDataconnections.Count == 0)
-		//	{
-		//		string body = @"
-		//	{
-		//		'name': 'TelemetryMetadata',
-		//		'connectionstring': '" + installDir + METADATA_OUTPUT + @"\\',
-		//		'type': 'folder',
-		//		'username': ''
-		//	}";
-
-
-		//		Tuple<HttpStatusCode, string> createdConnection = MakeRequest("/dataconnection", HttpMethod.Post, HTTPContentType.json, Encoding.UTF8.GetBytes(body));
-		//		if (createdConnection.Item1 != HttpStatusCode.Created)
-		//		{
-		//			return "Failure";
-		//		}
-		//	}
-		//	else
-		//	{
-		//		installDir = installDir.Replace("\\\\", "\\");
-		//		listOfDataconnections[0]["connectionstring"] = installDir + METADATA_OUTPUT + "\\";
-		//		listOfDataconnections[0]["modifiedDate"] = DateTime.UtcNow.ToString("s") + "Z";
-		//		string appId = listOfDataconnections[0]["id"].ToString();
-		//		Tuple<HttpStatusCode, string> updatedConnection = _qrsRequest.MakeRequest("/dataconnection/" + appId, HttpMethod.Put, HTTPContentType.json, Encoding.UTF8.GetBytes(listOfDataconnections[0].ToString()));
-		//		if (updatedConnection.Item1 != HttpStatusCode.OK)
-		//		{
-		//			return "Failure";
-		//		}
-		//	}
-
-		//	// Add EngineSettings dataconnection
-		//	Tuple<HttpStatusCode, string> engineSettingDataconnection = _qrsRequest.MakeRequest("/dataconnection?filter=name eq 'EngineSettingsFolder'", HttpMethod.Get);
-		//	if (dataConnections.Item1 != HttpStatusCode.OK)
-		//	{
-		//		return "Failure";
-		//	}
-		//	listOfDataconnections = JArray.Parse(engineSettingDataconnection.Item2);
-		//	if (listOfDataconnections.Count == 0)
-		//	{
-		//		string body = @"
-		//	{
-		//		'name': 'EngineSettingsFolder',
-		//		'connectionstring': 'C:\\ProgramData\\Qlik\\Sense\\Engine\\',
-		//		'type': 'folder',
-		//		'username': ''
-		//	}";
-
-		//		Tuple<HttpStatusCode, string> createdConnection = _qrsRequest.MakeRequest("/dataconnection", HttpMethod.Post, HTTPContentType.json, Encoding.UTF8.GetBytes(body));
-		//		if (createdConnection.Item1 != HttpStatusCode.Created)
-		//		{
-		//			return "Failure";
-		//		}
-		//	}
-
-		//	return "Success";
-		//}
+			// Add TelemetryMetadata dataconnection
+			Tuple<HttpStatusCode, string> dataConnections = TelemetryDashboardMain.QRSRequest.MakeRequest("/dataconnection?filter=name eq 'TelemetryMetadata'", HttpMethod.Get);
+			if (dataConnections.Item1 != HttpStatusCode.OK)
+			{
+				throw new InvalidResponseException(dataConnections.Item1.ToString() + " returned when trying to get 'TelmetryMetadata' data connections. Request failed.");
+			}
+			JArray listOfDataconnections = JArray.Parse(dataConnections.Item2);
+			if (listOfDataconnections.Count == 0)
+			{
+				string connectionStringPath = Path.Combine(FileLocationManager.GetTelemetrySharePath(), FileLocationManager.TELEMETRY_OUTPUT_FOLDER) + @"\";
+				TelemetryDashboardMain.Logger.Log("Building body for 'TelemetryMetadata' data connection. Connection string path: " + connectionStringPath, LogLevel.Debug);
+				connectionStringPath = connectionStringPath.Replace("\\", "\\\\");
+				string body = @"
+			{
+				'name': 'TelemetryMetadata',
+				'connectionstring': '" + connectionStringPath + @"',
+				'type': 'folder',
+				'username': ''
+			}";
 
 
-		//public string ValidateExeLocation()
-		//{
-		//	_logger.Log("Telemetry Dashboard executable is running from: " + WORKING_DIRECTORY, LogLevel.Info);
+				Tuple<HttpStatusCode, string> createdConnection = TelemetryDashboardMain.QRSRequest.MakeRequest("/dataconnection", HttpMethod.Post, HTTPContentType.json, Encoding.UTF8.GetBytes(body));
+				if (createdConnection.Item1 != HttpStatusCode.Created)
+				{
+					throw new InvalidResponseException(dataConnections.Item1.ToString() + " returned when trying to create 'TelemetryMetadata' data connection. Request failed.");
+				}
+			}
+			else
+			{
+				listOfDataconnections[0]["connectionstring"] = Path.Combine(FileLocationManager.GetTelemetrySharePath(), FileLocationManager.TELEMETRY_OUTPUT_FOLDER) + "\\";
+				listOfDataconnections[0]["modifiedDate"] = DateTime.UtcNow.ToString("s") + "Z";
+				string appId = listOfDataconnections[0]["id"].ToString();
+				Tuple<HttpStatusCode, string> updatedConnection = TelemetryDashboardMain.QRSRequest.MakeRequest("/dataconnection/" + appId, HttpMethod.Put, HTTPContentType.json, Encoding.UTF8.GetBytes(listOfDataconnections[0].ToString()));
+				if (updatedConnection.Item1 != HttpStatusCode.OK)
+				{
+					throw new InvalidResponseException(dataConnections.Item1.ToString() + " returned when trying to update 'TelemetryMetadata' data connection. Request failed.");
+				}
+			}
 
-		//	try
-		//	{
-		//		if (!Regex.IsMatch(WORKING_DIRECTORY.Substring(0, 3), "\\\\[a-zA-Z0-9]"))
-		//		{
-		//			throw new ArgumentException("Installer path must be a network locattion (start with \"\\\\\").");
-		//		}
+			// Add EngineSettings dataconnection
+			Tuple<HttpStatusCode, string> engineSettingDataconnection = TelemetryDashboardMain.QRSRequest.MakeRequest("/dataconnection?filter=name eq 'EngineSettingsFolder'", HttpMethod.Get);
+			if (dataConnections.Item1 != HttpStatusCode.OK)
+			{
+				throw new InvalidResponseException(dataConnections.Item1.ToString() + " returned when trying to get 'EngineSettingsFolder' data connection. Request failed.");
+			}
+			listOfDataconnections = JArray.Parse(engineSettingDataconnection.Item2);
+			if (listOfDataconnections.Count == 0)
+			{
+				string body = @"
+					{
+						'name': 'EngineSettingsFolder',
+						'connectionstring': 'C:\\ProgramData\\Qlik\\Sense\\Engine\\',
+						'type': 'folder',
+						'username': ''
+					}";
 
-		//		if (!installDir.EndsWith("\\" + OUTPUT_FOLDER + "\\"))
-		//		{
-		//			throw new ArgumentException("Telemetry Dashboard but be installed to \"" + OUTPUT_FOLDER + "\" folder on share (installer directory must end with \"\\" + OUTPUT_FOLDER + "\").");
-		//		}
+				Tuple<HttpStatusCode, string> createdConnection = TelemetryDashboardMain.QRSRequest.MakeRequest("/dataconnection", HttpMethod.Post, HTTPContentType.json, Encoding.UTF8.GetBytes(body));
+				if (createdConnection.Item1 != HttpStatusCode.Created)
+				{
+					throw new InvalidResponseException(dataConnections.Item1.ToString() + " returned when trying to create 'EngineSettingsFolder' data connection. Request failed.");
+				}
+			}
 
-		//		installDir = installDir.Substring(0, installDir.Length - (OUTPUT_FOLDER.Length + 1));
+			return;
+		}
 
-		//		string[] dirs = Directory.GetDirectories(installDir);
-		//		for (int i = 0; i < dirs.Length; i++)
-		//		{
-		//			dirs[i] = dirs[i].Substring(installDir.Length);
-		//		}
+		private static void CreateTasks(string appId)
+		{
+			string telemetryDashboardPath = Path.Combine(FileLocationManager.GetTelemetrySharePath(), FileLocationManager.TELEMETRY_EXE_FILENAME);
 
-		//		if (!(dirs.Contains("Apps") || dirs.Contains("ArchivedLogs") || dirs.Contains("CustomData") || dirs.Contains("StaticContent")))
-		//		{
-		//			session.Message(InstallMessage.Warning, new Record() { FormatString = "Installer did not find an 'Apps', 'StaticContent', 'ArchivedLogs' or 'StaticContent' folder. Install will proceed but Telemetry Dashboard may not function if not installed in root Qlik Sense share folder." });
-		//		}
-		//	}
-		//	catch (ArgumentException e)
-		//	{
-		//		session.Message(InstallMessage.Error, new Record() { FormatString = "The install directory was not valid:\n" + e.Message });
-		//		return "Failure";
-		//	}
-		//	catch (Exception e)
-		//	{
-		//		session.Message(InstallMessage.Error, new Record() { FormatString = "The install directory validation failed:\n" + e.Message });
-		//		return "Failure";
-		//	}
+			string externalTaskID = "";
+			// External Task
+			Tuple<HttpStatusCode, string> hasExternalTask = TelemetryDashboardMain.QRSRequest.MakeRequest("/externalprogramtask/count?filter=name eq 'TelemetryDashboard-1-Generate-Metadata'", HttpMethod.Get);
+			if (hasExternalTask.Item1 != HttpStatusCode.OK)
+			{
+				throw new InvalidResponseException(hasExternalTask.Item1.ToString() + " returned when trying to get 'TelemetryDashboard-1-Generate-Metadata' external task. Request failed.");
+			}
+			if (JObject.Parse(hasExternalTask.Item2)["value"].ToObject<int>() == 0)
+			{
+				string body = @"
+			{
+				'path': '" + telemetryDashboardPath + @"',
+				'parameters': '-metadatafetch',
+				'name': 'TelemetryDashboard-1-Generate-Metadata',
+				'taskType': 1,
+				'enabled': true,
+				'taskSessionTimeout': 1440,
+				'maxRetries': 0,
+				'impactSecurityAccess': false,
+				'schemaPath': 'ExternalProgramTask'
+			}";
+				Tuple<HttpStatusCode, string> createExternalTask = TelemetryDashboardMain.QRSRequest.MakeRequest("/externalprogramtask", HttpMethod.Post, HTTPContentType.json, Encoding.UTF8.GetBytes(body));
+				if (createExternalTask.Item1 != HttpStatusCode.Created)
+				{
+					throw new InvalidResponseException(createExternalTask.Item1.ToString() + " returned when trying to create 'TelemetryDashboard-1-Generate-Metadata' external task. Request failed.");
+				}
+				else
+				{
+					externalTaskID = JObject.Parse(createExternalTask.Item2)["id"].ToString();
+				}
+			}
+			else
+			{
+				Tuple<HttpStatusCode, string> getExternalTaskId = TelemetryDashboardMain.QRSRequest.MakeRequest("/externalprogramtask?filter=name eq 'TelemetryDashboard-1-Generate-Metadata'", HttpMethod.Get);
+				externalTaskID = JArray.Parse(getExternalTaskId.Item2)[0]["id"].ToString();
 
-		//	return "Success";
-		//}
+			}
 
-		//public string SetOutputDir()
-		//{
-		//	string installDir = session.CustomActionData["InstallDir"];
-		//	string outputDir = Path.Combine(installDir, METADATA_OUTPUT);
+			// Reload Task
+			Tuple<HttpStatusCode, string> reloadTasks = TelemetryDashboardMain.QRSRequest.MakeRequest("/reloadtask/full?filter=name eq 'TelemetryDashboard-2-Reload-Dashboard'", HttpMethod.Get);
+			if (reloadTasks.Item1 != HttpStatusCode.OK)
+			{
+				throw new InvalidResponseException(reloadTasks.Item1.ToString() + " returned when trying to get 'TelemetryDashboard-2-Reload-Dashboard' external task. Request failed.");
+			}
 
-		//	outputDir = outputDir.Replace('\\', '/');
-		//	if (!outputDir.EndsWith("/"))
-		//	{
-		//		outputDir += '/';
-		//	}
-		//	string text = File.ReadAllText(installDir + JS_LIBRARY_FOLDER + "\\config\\config.js");
-		//	text = text.Replace("outputFolderPlaceholder", outputDir);
-		//	File.WriteAllText(installDir + JS_LIBRARY_FOLDER + "\\config\\config.js", text);
+			JArray listOfTasks = JArray.Parse(reloadTasks.Item2);
 
-		//	return "Success";
-		//}
+			if (listOfTasks.Count == 0)
+			{
+				string body = @"
+				{
+					'compositeEvents': [
+					{
+						'compositeRules': [
+						{
+							'externalProgramTask': {
+								'id': '" + externalTaskID + @"',
+								'name': 'TelemetryDashboard-1-Generate-Metadata'
+							},
+							'ruleState': 1
+						}
+						],
+						'enabled': true,
+						'eventType': 1,
+						'name': 'telemetry-metadata-trigger',
+						'privileges': [
+							'read',
+							'update',
+							'create',
+							'delete'
+						],
+						'timeConstraint': {
+							'days': 0,
+							'hours': 0,
+							'minutes': 360,
+							'seconds': 0
+						}
+					}
+					],
+					'schemaEvents': [],
+					'task': {
+						'app': {
+							'id': '" + appId + @"',
+							'name': 'Telemetry Dashboard'
+						},
+						'customProperties': [],
+						'enabled': true,
+						'isManuallyTriggered': false,
+						'maxRetries': 0,
+						'name': 'TelemetryDashboard-2-Reload-Dashboard',
+						'tags': [],
+						'taskSessionTimeout': 1440,
+						'taskType': 0
+					}
+				}";
 
-		//public string ImportApp()
-		//{
-		//	Tuple<HttpStatusCode, string> apps = _qrsRequest.MakeRequest("/app/full?filter=name eq 'Telemetry Dashboard'", HttpMethod.Get);
-		//	if (apps.Item1 != HttpStatusCode.OK)
-		//	{
-		//		return "Failure";
-		//	}
+				Tuple<HttpStatusCode, string> createTaskResponse = TelemetryDashboardMain.QRSRequest.MakeRequest("/reloadtask/create", HttpMethod.Post, HTTPContentType.json, Encoding.UTF8.GetBytes(body));
+				if (createTaskResponse.Item1 != HttpStatusCode.Created)
+				{
+					throw new InvalidResponseException(createTaskResponse.Item1.ToString() + " returned when trying to create 'TelemetryDashboard-2-Reload-Dashboard' external task. Request failed.");
+				}
+			}
+			else
+			{
+				listOfTasks[0]["app"] = JObject.Parse(@"{ 'id': '" + appId + "'}");
+				listOfTasks[0]["modifiedDate"] = DateTime.UtcNow.ToString("s") + "Z";
+				string reloadTaskID = listOfTasks[0]["id"].ToString();
+				Tuple<HttpStatusCode, string> updatedTaskResponse = TelemetryDashboardMain.QRSRequest.MakeRequest("/reloadtask/" + reloadTaskID, HttpMethod.Put, HTTPContentType.json, Encoding.UTF8.GetBytes(listOfTasks[0].ToString()));
+				if (updatedTaskResponse.Item1 != HttpStatusCode.OK)
+				{
+					throw new InvalidResponseException(updatedTaskResponse.Item1.ToString() + " returned when trying to update 'TelemetryDashboard-2-Reload-Dashboard' external task. Request failed.");
+				}
+			}
 
-		//	JArray listOfApps = JArray.Parse(apps.Item2);
-
-		//	if (listOfApps.Count == 1)
-		//	{
-		//		string appID = listOfApps[0]["id"].ToString();
-		//		Tuple<HttpStatusCode, string> replaceAppResponse = _qrsRequest.MakeRequest("/app/upload/replace?targetappid=" + appID, HttpMethod.Post, HTTPContentType.app, Properties.Resources.Telemetry_Dashboard);
-		//		if (replaceAppResponse.Item1 == HttpStatusCode.Created)
-		//		{
-		//			return "Success";
-		//		}
-		//	}
-
-		//	else
-		//	{
-		//		if (listOfApps.Count > 1)
-		//		{
-		//			for (int i = 0; i < listOfApps.Count; i++)
-		//			{
-		//				listOfApps[i]["name"] = listOfApps[i]["name"] + "-old";
-		//				listOfApps[i]["modifiedDate"] = DateTime.UtcNow.ToString("s") + "Z";
-		//				string appId = listOfApps[i]["id"].ToString();
-		//				Tuple<HttpStatusCode, string> updatedApp = _qrsRequest.MakeRequest("/app/" + appId, HttpMethod.Put, HTTPContentType.json, Encoding.UTF8.GetBytes(listOfApps[i].ToString()));
-		//				if (updatedApp.Item1 != HttpStatusCode.OK)
-		//				{
-		//					return "Failure";
-		//				}
-		//			}
-		//		}
-
-		//		Tuple<HttpStatusCode, string> uploadAppResponse = _qrsRequest.MakeRequest("/app/upload?name=Telemetry Dashboard", HttpMethod.Post, HTTPContentType.app, Properties.Resources.Telemetry_Dashboard);
-		//		if (uploadAppResponse.Item1 == HttpStatusCode.Created)
-		//		{
-		//			return "Success";
-		//		}
-		//	}
-		//	return "Failure";
-		//}
-
-		//public string CreateTasks()
-		//{
-		//	string installDir = session.CustomActionData["InstallDir"];
-		//	if (!installDir.EndsWith("\\"))
-		//	{
-		//		installDir += "\\";
-		//	}
-
-		//	string externalTaskID = "";
-		//	// External Task
-		//	Tuple<HttpStatusCode, string> hasExternalTask = _qrsRequest.MakeRequest("/externalprogramtask/count?filter=name eq 'TelemetryDashboard-1-Generate-Metadata'", HttpMethod.Get);
-		//	if (hasExternalTask.Item1 != HttpStatusCode.OK)
-		//	{
-		//		return "Failure";
-		//	}
-		//	if (JObject.Parse(hasExternalTask.Item2)["value"].ToObject<int>() == 0)
-		//	{
-		//		installDir = installDir.Replace("\\", "\\\\");
-		//		string body = @"
-		//	{
-		//		'path': '..\\ServiceDispatcher\\Node\\node.exe',
-		//		'parameters': '""" + Path.Combine(installDir, JS_LIBRARY_FOLDER) + @"\\fetchMetadata.js""',
-		//		'name': 'TelemetryDashboard-1-Generate-Metadata',
-		//		'taskType': 1,
-		//		'enabled': true,
-		//		'taskSessionTimeout': 1440,
-		//		'maxRetries': 0,
-		//		'impactSecurityAccess': false,
-		//		'schemaPath': 'ExternalProgramTask'
-		//	}";
-		//		Tuple<HttpStatusCode, string> createExternalTask = _qrsRequest.MakeRequest("/externalprogramtask", HttpMethod.Post, HTTPContentType.json, Encoding.UTF8.GetBytes(body));
-		//		if (createExternalTask.Item1 != HttpStatusCode.Created)
-		//		{
-		//			return "Failure";
-		//		}
-		//		else
-		//		{
-		//			externalTaskID = JObject.Parse(createExternalTask.Item2)["id"].ToString();
-		//		}
-		//	}
-		//	else
-		//	{
-		//		Tuple<HttpStatusCode, string> getExternalTaskId = _qrsRequest.MakeRequest("/externalprogramtask?filter=name eq 'TelemetryDashboard-1-Generate-Metadata'", HttpMethod.Get);
-		//		externalTaskID = JArray.Parse(getExternalTaskId.Item2)[0]["id"].ToString();
-
-		//	}
-
-		//	// Reload Task
-		//	Tuple<HttpStatusCode, string> reloadTasks = _qrsRequest.MakeRequest("/reloadtask/full?filter=name eq 'TelemetryDashboard-2-Reload-Dashboard'", HttpMethod.Get);
-		//	if (reloadTasks.Item1 != HttpStatusCode.OK)
-		//	{
-		//		return "Failure";
-		//	}
-
-		//	JArray listOfTasks = JArray.Parse(reloadTasks.Item2);
-
-		//	// Get AppID for Telemetry Dashboard App
-		//	Tuple<HttpStatusCode, string> getAppID = _qrsRequest.MakeRequest("/app?filter=name eq 'Telemetry Dashboard'", HttpMethod.Get);
-		//	string appId = JArray.Parse(getAppID.Item2)[0]["id"].ToString();
-
-		//	if (listOfTasks.Count == 0)
-		//	{
-		//		string body = @"
-		//		{
-		//			'compositeEvents': [
-		//			{
-		//				'compositeRules': [
-		//				{
-		//					'externalProgramTask': {
-		//						'id': '" + externalTaskID + @"',
-		//						'name': 'TelemetryDashboard-1-Generate-Metadata'
-		//					},
-		//					'ruleState': 1
-		//				}
-		//				],
-		//				'enabled': true,
-		//				'eventType': 1,
-		//				'name': 'telemetry-metadata-trigger',
-		//				'privileges': [
-		//					'read',
-		//					'update',
-		//					'create',
-		//					'delete'
-		//				],
-		//				'timeConstraint': {
-		//					'days': 0,
-		//					'hours': 0,
-		//					'minutes': 360,
-		//					'seconds': 0
-		//				}
-		//			}
-		//			],
-		//			'schemaEvents': [],
-		//			'task': {
-		//				'app': {
-		//					'id': '" + appId + @"',
-		//					'name': 'Telemetry Dashboard'
-		//				},
-		//				'customProperties': [],
-		//				'enabled': true,
-		//				'isManuallyTriggered': false,
-		//				'maxRetries': 0,
-		//				'name': 'TelemetryDashboard-2-Reload-Dashboard',
-		//				'tags': [],
-		//				'taskSessionTimeout': 1440,
-		//				'taskType': 0
-		//			}
-		//		}";
-
-		//		Tuple<HttpStatusCode, string> importExtensionResponse = _qrsRequest.MakeRequest("/reloadtask/create", HttpMethod.Post, HTTPContentType.json, Encoding.UTF8.GetBytes(body));
-		//		if (importExtensionResponse.Item1 != HttpStatusCode.Created)
-		//		{
-		//			return "Failure";
-		//		}
-		//	}
-		//	else
-		//	{
-		//		listOfTasks[0]["app"] = JObject.Parse(@"{ 'id': '" + appId + "'}");
-		//		listOfTasks[0]["modifiedDate"] = DateTime.UtcNow.ToString("s") + "Z";
-		//		string reloadTaskID = listOfTasks[0]["id"].ToString();
-		//		Tuple<HttpStatusCode, string> updatedApp = _qrsRequest.MakeRequest("/reloadtask/" + reloadTaskID, HttpMethod.Put, HTTPContentType.json, Encoding.UTF8.GetBytes(listOfTasks[0].ToString()));
-		//		if (updatedApp.Item1 != HttpStatusCode.OK)
-		//		{
-		//			return "Failure";
-		//		}
-		//	}
-
-		//	return "Success";
-		//}
+			return;
+		}
 
 
 
