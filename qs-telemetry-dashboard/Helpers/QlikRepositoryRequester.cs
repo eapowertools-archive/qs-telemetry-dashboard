@@ -115,7 +115,7 @@ namespace qs_telemetry_dashboard.Helpers
 		private bool IsRepositoryRunning()
 		{
 			TelemetryDashboardMain.Logger.Log("Checking to see if repository is running.", LogLevel.Info);
-			TelemetryDashboardMain.Logger.Log(string.Format("Sending request to 'https://{0}:4242'.", Hostname), LogLevel.Info);
+			TelemetryDashboardMain.Logger.Log(string.Format("Sending request to 'https://{0}:4242'.", _configuration.Hostname), LogLevel.Info);
 
 			Tuple<HttpStatusCode, string> response = TelemetryDashboardMain.QRSRequest.MakeRequest("/about", HttpMethod.Get);
 			if (response.Item1 == HttpStatusCode.OK)

@@ -118,20 +118,15 @@ namespace qs_telemetry_dashboard
 				// try to load from file.
 				// validate you could get the config file
 				TelemetryConfiguration tConfig;
-				if (!ConfigurationManager.HasConfiguration)
+				if (!ConfigurationManager.TryGetConfiguration(out tConfig))
 				{
 					Logger.Log("Failed to get configuration from '" + FileLocationManager.WorkingDirectory + "'. Will need user credentials.", LogLevel.Info);
 					QlikCredentials creds = IOHelpers.GetCredentials();
 					tConfig = new TelemetryConfiguration();
 					tConfig.QlikClientCertificate = CertificateHelpers.FetchCertificate(creds);
 					tConfig.Hostname = InitializeEnvironment.Hostname;
-					_qrsInstance = new QlikRepositoryRequester(tConfig);
-					tConfig = ConfigurationManager.GetConfiguration(false);
 				}
-				else
-				{
-					tConfig = ConfigurationManager.GetConfiguration(true);
-				}
+
 				_qrsInstance = new QlikRepositoryRequester(tConfig);
 
 				HttpStatusCode statusCode = TestConfiguration();

@@ -23,6 +23,14 @@ namespace qs_telemetry_dashboard.Helpers
 			}
 		}
 
+		internal static string WorkingTelemetryDashboardExePath
+		{
+			get
+			{
+				return System.Reflection.Assembly.GetEntryAssembly().Location;
+			}
+		}
+
 		internal static string GetTelemetrySharePath()
 		{
 			Tuple<HttpStatusCode, string> response = TelemetryDashboardMain.QRSRequest.MakeRequest("/servicecluster/full", HttpMethod.Get);
