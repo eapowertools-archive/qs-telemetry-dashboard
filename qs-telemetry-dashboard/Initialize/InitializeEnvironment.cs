@@ -31,11 +31,6 @@ namespace qs_telemetry_dashboard.Initialize
 		{
 			TelemetryDashboardMain.Logger.Log("Running in initialize mode.", LogLevel.Info);
 
-			//if (!IsRepositoryRunning())
-			//{
-			//	return 1;
-			//}
-
 			// get location to copy exe to
 			string telemetryPath = FileLocationManager.GetTelemetrySharePath();
 
@@ -186,7 +181,7 @@ namespace qs_telemetry_dashboard.Initialize
 			return;
 		}
 
-		private static string CreateTasks(string appId)
+		private static void CreateTasks(string appId)
 		{
 			string telemetryDashboardPath = Path.Combine(FileLocationManager.GetTelemetrySharePath(), FileLocationManager.TELEMETRY_EXE_FILENAME);
 
@@ -195,7 +190,7 @@ namespace qs_telemetry_dashboard.Initialize
 			Tuple<HttpStatusCode, string> hasExternalTask = TelemetryDashboardMain.QRSRequest.MakeRequest("/externalprogramtask/count?filter=name eq 'TelemetryDashboard-1-Generate-Metadata'", HttpMethod.Get);
 			if (hasExternalTask.Item1 != HttpStatusCode.OK)
 			{
-				return "Failure";
+				throw new InvalidResponseException(hasExternalTask.Item1.ToString() + " returned when trying to get 'TelemetryDashboard-1-Generate-Metadata' external task. Request failed.");
 			}
 			if (JObject.Parse(hasExternalTask.Item2)["value"].ToObject<int>() == 0)
 			{
@@ -214,7 +209,7 @@ namespace qs_telemetry_dashboard.Initialize
 				Tuple<HttpStatusCode, string> createExternalTask = TelemetryDashboardMain.QRSRequest.MakeRequest("/externalprogramtask", HttpMethod.Post, HTTPContentType.json, Encoding.UTF8.GetBytes(body));
 				if (createExternalTask.Item1 != HttpStatusCode.Created)
 				{
-					return "Failure";
+					throw new InvalidResponseException(createExternalTask.Item1.ToString() + " returned when trying to create 'TelemetryDashboard-1-Generate-Metadata' external task. Request failed.");
 				}
 				else
 				{
@@ -232,7 +227,7 @@ namespace qs_telemetry_dashboard.Initialize
 			Tuple<HttpStatusCode, string> reloadTasks = TelemetryDashboardMain.QRSRequest.MakeRequest("/reloadtask/full?filter=name eq 'TelemetryDashboard-2-Reload-Dashboard'", HttpMethod.Get);
 			if (reloadTasks.Item1 != HttpStatusCode.OK)
 			{
-				return "Failure";
+				throw new InvalidResponseException(reloadTasks.Item1.ToString() + " returned when trying to get 'TelemetryDashboard-2-Reload-Dashboard' external task. Request failed.");
 			}
 
 			JArray listOfTasks = JArray.Parse(reloadTasks.Item2);
@@ -286,10 +281,10 @@ namespace qs_telemetry_dashboard.Initialize
 					}
 				}";
 
-				Tuple<HttpStatusCode, string> importExtensionResponse = TelemetryDashboardMain.QRSRequest.MakeRequest("/reloadtask/create", HttpMethod.Post, HTTPContentType.json, Encoding.UTF8.GetBytes(body));
-				if (importExtensionResponse.Item1 != HttpStatusCode.Created)
+				Tuple<HttpStatusCode, string> createTaskResponse = TelemetryDashboardMain.QRSRequest.MakeRequest("/reloadtask/create", HttpMethod.Post, HTTPContentType.json, Encoding.UTF8.GetBytes(body));
+				if (createTaskResponse.Item1 != HttpStatusCode.Created)
 				{
-					return "Failure";
+					throw new InvalidResponseException(createTaskResponse.Item1.ToString() + " returned when trying to create 'TelemetryDashboard-2-Reload-Dashboard' external task. Request failed.");
 				}
 			}
 			else
@@ -297,14 +292,14 @@ namespace qs_telemetry_dashboard.Initialize
 				listOfTasks[0]["app"] = JObject.Parse(@"{ 'id': '" + appId + "'}");
 				listOfTasks[0]["modifiedDate"] = DateTime.UtcNow.ToString("s") + "Z";
 				string reloadTaskID = listOfTasks[0]["id"].ToString();
-				Tuple<HttpStatusCode, string> updatedApp = TelemetryDashboardMain.QRSRequest.MakeRequest("/reloadtask/" + reloadTaskID, HttpMethod.Put, HTTPContentType.json, Encoding.UTF8.GetBytes(listOfTasks[0].ToString()));
-				if (updatedApp.Item1 != HttpStatusCode.OK)
+				Tuple<HttpStatusCode, string> updatedTaskResponse = TelemetryDashboardMain.QRSRequest.MakeRequest("/reloadtask/" + reloadTaskID, HttpMethod.Put, HTTPContentType.json, Encoding.UTF8.GetBytes(listOfTasks[0].ToString()));
+				if (updatedTaskResponse.Item1 != HttpStatusCode.OK)
 				{
-					return "Failure";
+					throw new InvalidResponseException(updatedTaskResponse.Item1.ToString() + " returned when trying to update 'TelemetryDashboard-2-Reload-Dashboard' external task. Request failed.");
 				}
 			}
 
-			return "Success";
+			return;
 		}
 
 
