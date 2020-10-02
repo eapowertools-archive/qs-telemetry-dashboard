@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+
 namespace qs_telemetry_dashboard.Models.TelemetryMetadata
 {
 	[Serializable]
@@ -15,6 +17,10 @@ namespace qs_telemetry_dashboard.Models.TelemetryMetadata
 		internal Guid StreamID { get; set; }
 
 		internal string StreamName { get; set; }
+
+		internal Guid AppOwner { get; set; }
+
+		internal IList<Sheet> Sheets { get; set; }
 
 		internal App()
 		{

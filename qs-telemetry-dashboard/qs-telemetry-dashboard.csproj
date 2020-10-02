@@ -90,6 +90,8 @@
     <Compile Include="Models\TelemetryMetadata\App.cs" />
     <Compile Include="Models\TelemetryMetadata\Sheet.cs" />
     <Compile Include="Models\TelemetryMetadata\Visualization.cs" />
+    <Compile Include="Models\TelemetryMetadata\EngineInfo.cs" />
+    <Compile Include="Models\TelemetryMetadata\UnparsedObject\UnparsedSheet.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
@@ -122,6 +124,7 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Models\TelemetryMetadata\" />
+    <Folder Include="Models\TelemetryMetadata\UnparsedObject\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

@@ -8,12 +8,29 @@ namespace qs_telemetry_dashboard.Models.TelemetryMetadata
 	{
 		internal DateTime ReloadTime { get; set; }
 
-		internal List<User> Users { get; set; }
+		internal IList<EngineInfo> EngineInfos { get; set; }
 
-		internal List<App> Apps { get; set; }
+		internal IList<User> Users { get; set; }
 
-		public TelemetryMetadata()
+		internal IList<App> Apps { get; set; }
+
+		internal TelemetryMetadata()
 		{
+			if (ReloadTime == null)
+			{
+				ReloadTime = DateTime.MinValue;
+			}
+			EngineInfos = new List<EngineInfo>();
+			Users = new List<User>();
+			Apps = new List<App>();
+		}
+
+		internal TelemetryMetadata(bool updateTime) : base()
+		{
+			if (updateTime)
+			{
+				ReloadTime = DateTime.Now;
+			}
 		}
 
 		internal bool WriteToDisk()

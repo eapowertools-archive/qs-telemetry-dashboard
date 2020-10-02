@@ -10,6 +10,8 @@ namespace qs_telemetry_dashboard.Models.TelemetryMetadata
 
 		internal string UserDirectory { get; set; }
 
+		internal string Username { get; set; }
+
 		internal User()
 		{
 		}

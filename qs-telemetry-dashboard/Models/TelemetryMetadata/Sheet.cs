@@ -1,11 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
+
 namespace qs_telemetry_dashboard.Models.TelemetryMetadata
 {
 	[Serializable]
 	internal class Sheet
 	{
-		internal Guid AppID { get; set; }
-
 		internal string EngineObjectID { get; set; }
 
 		internal string Name { get; set; }
@@ -15,6 +15,8 @@ namespace qs_telemetry_dashboard.Models.TelemetryMetadata
 		internal bool Published { get; set; }
 
 		internal bool Approved { get; set; }
+
+		internal IList<Visualization> Visualizations { get; set; }
 
 		internal Sheet()
 		{
