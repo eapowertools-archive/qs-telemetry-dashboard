@@ -39,7 +39,7 @@ namespace qs_telemetry_dashboard.MetadataFetch
 
 			newMetadata = new TelemetryMetadata(true);
 
-			GetRepositoryApps(newMetadata);
+			//GetRepositoryApps(newMetadata);
 			GetRepositorySheets(newMetadata);
 
 			string outputPath = Path.Combine(FileLocationManager.GetTelemetrySharePath(), FileLocationManager.TELEMETRY_OUTPUT_FOLDER);
@@ -159,12 +159,19 @@ namespace qs_telemetry_dashboard.MetadataFetch
 				}";
 
 			int startLocation = 0;
+			IList<UnparsedSheet> allSheets = new List<UnparsedSheet>();
+			Tuple<HttpStatusCode, string> sheetResponse;
 			do
 			{
-				Tuple<HttpStatusCode, string> sheetResponse = TelemetryDashboardMain.QRSRequest.MakeRequest("/app/object/table?filter=objectType eq 'sheet'&skip=" + startLocation + "&take=" + PAGESIZE, HttpMethod.Post, HTTPContentType.json, Encoding.UTF8.GetBytes(sheetBody));
+				sheetResponse = TelemetryDashboardMain.QRSRequest.MakeRequest("/app/object/table?filter=objectType eq 'sheet'&skip=" + startLocation + "&take=" + PAGESIZE, HttpMethod.Post, HTTPContentType.json, Encoding.UTF8.GetBytes(sheetBody));
 				if (sheetResponse.Item1 != HttpStatusCode.Created)
 				{
-					throw new InvalidResponseException(sheetResponse.Item1.ToString() + " returned when trying to create 'EngineSettingsFolder' data connection. Request failed.");
+					throw new InvalidResponseException(sheetResponse.Item1.ToString() + " returned when trying to get sheets. Request failed.");
+				}
+				JArray returnedSheets = JArray.Parse(sheetResponse.Item2);
+				foreach (JObject sheet in returnedSheets)
+				{
+					allSheets.Add(new UnparsedSheet(sheet[0].ToObject<Guid>(), sheet[1].ToString(), sheet[2].ToString(), sheet[3].ToObject<Guid>(), sheet[4].ToObject<bool>(), sheet[5].ToObject<bool>()));
 				}
 			} while (startLocation < sheetCount);
 		}
