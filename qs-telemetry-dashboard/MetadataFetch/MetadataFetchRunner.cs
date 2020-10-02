@@ -48,32 +48,37 @@ namespace qs_telemetry_dashboard.MetadataFetch
 
 		internal static void GetRepositoryApps(TelemetryMetadata metadataObject)
 		{
-			TelemetryDashboardMain.Logger.Log("Found metadata file, will load contents.", LogLevel.Info);
-			Tuple<HttpStatusCode, string> numberOfSheets = TelemetryDashboardMain.QRSRequest.MakeRequest("/app/object/count?filter=objectType eq 'sheet'", HttpMethod.Get);
-			if (numberOfSheets.Item1 != HttpStatusCode.OK)
+			TelemetryDashboardMain.Logger.Log("Fetching all apps.", LogLevel.Info);
+			Tuple<HttpStatusCode, string> numOfApps = TelemetryDashboardMain.QRSRequest.MakeRequest("/app/count", HttpMethod.Get);
+			if (numOfApps.Item1 != HttpStatusCode.OK)
 			{
-				throw new InvalidResponseException(numberOfSheets.Item1.ToString() + " returned when trying to get a count of all the sheets. Request failed.");
+				throw new InvalidResponseException(numOfApps.Item1.ToString() + " returned when trying to get a count of all the apps. Request failed.");
 			}
-			int sheetCount = JObject.Parse(numberOfSheets.Item2)["value"].ToObject<int>();
+			int appCount = JObject.Parse(numOfApps.Item2)["value"].ToObject<int>();
 
 
-			string sheetBody = @"
+			string appBody = @"
 				{
 					'columns':
 						[{
 							'columnType': 'Property',
-							'definition': 'app.id',
-							'name': 'app.id'
-						},
-						{
-							'columnType': 'Property',
-							'definition': 'engineObjectId',
-							'name': 'engineObjectId'
+							'definition': 'id',
+							'name': 'id'
 						},
 						{
 							'columnType': 'Property',
 							'definition': 'name',
 							'name': 'name'
+						},
+						{
+							'columnType': 'Property',
+							'definition': 'published',
+							'name': 'published'
+						},
+{
+							'columnType': 'Property',
+							'definition': 'published',
+							'name': 'published'
 						},
 						{
 							'columnType': 'Property',
@@ -93,27 +98,41 @@ namespace qs_telemetry_dashboard.MetadataFetch
 						'entity': 'App.Object'
 				}";
 
+			//internal Guid ID { get; set; }
+
+			//internal string Name { get; set; }
+
+			//internal bool Published { get; set; }
+
+			//internal DateTime PublishedDateTime { get; set; }
+
+			//internal Guid StreamID { get; set; }
+
+			//internal string StreamName { get; set; }
+
+			//internal Guid AppOwner { get; set; }
+
 			int startLocation = 0;
-			IList<UnparsedSheet> allSheets = new List<UnparsedSheet>();
-			Tuple<HttpStatusCode, string> sheetResponse;
+			Tuple<HttpStatusCode, string> appResponse;
 			do
 			{
-				sheetResponse = TelemetryDashboardMain.QRSRequest.MakeRequest("/app/object/table?filter=objectType eq 'sheet'&skip=" + startLocation + "&take=" + PAGESIZE, HttpMethod.Post, HTTPContentType.json, Encoding.UTF8.GetBytes(sheetBody));
-				if (sheetResponse.Item1 != HttpStatusCode.Created)
+				appResponse = TelemetryDashboardMain.QRSRequest.MakeRequest("/app/table?skip=" + startLocation + "&take=" + PAGESIZE, HttpMethod.Post, HTTPContentType.json, Encoding.UTF8.GetBytes(appBody));
+				if (appResponse.Item1 != HttpStatusCode.Created)
 				{
-					throw new InvalidResponseException(sheetResponse.Item1.ToString() + " returned when trying to get sheets. Request failed.");
+					throw new InvalidResponseException(appResponse.Item1.ToString() + " returned when trying to get apps. Request failed.");
 				}
-				JArray returnedSheets = JArray.Parse(sheetResponse.Item2);
-				foreach (JObject sheet in returnedSheets)
+				JArray returnedApps = JArray.Parse(appResponse.Item2);
+				foreach (JObject app in returnedApps)
 				{
-					allSheets.Add(new UnparsedSheet(sheet[0].ToObject<Guid>(), sheet[1].ToString(), sheet[2].ToString(), sheet[3].ToObject<Guid>(), sheet[4].ToObject<bool>(), sheet[5].ToObject<bool>()));
+					metadataObject.Apps.Add(new App());
+					//allSheets.Add(new UnparsedSheet(sheet[0].ToObject<Guid>(), sheet[1].ToString(), sheet[2].ToString(), sheet[3].ToObject<Guid>(), sheet[4].ToObject<bool>(), sheet[5].ToObject<bool>()));
 				}
-			} while (startLocation < sheetCount);
+			} while (startLocation < appCount);
 		}
 
-		internal static void GetRepositorySheets(TelemetryMetadata metadataObject)
+		internal static void GetRepositorySheets()
 		{
-			TelemetryDashboardMain.Logger.Log("Found metadata file, will load contents.", LogLevel.Info);
+			TelemetryDashboardMain.Logger.Log("Fetching all sheets.", LogLevel.Info);
 			Tuple<HttpStatusCode, string> numberOfSheets = TelemetryDashboardMain.QRSRequest.MakeRequest("/app/object/count?filter=objectType eq 'sheet'", HttpMethod.Get);
 			if (numberOfSheets.Item1 != HttpStatusCode.OK)
 			{
