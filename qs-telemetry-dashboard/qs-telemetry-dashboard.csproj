@@ -85,6 +85,11 @@
     <Compile Include="TelemetryDashboardMain.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Exceptions\InvalidResponseException.cs" />
+    <Compile Include="Models\TelemetryMetadata\TelemetryMetadata.cs" />
+    <Compile Include="Models\TelemetryMetadata\User.cs" />
+    <Compile Include="Models\TelemetryMetadata\App.cs" />
+    <Compile Include="Models\TelemetryMetadata\Sheet.cs" />
+    <Compile Include="Models\TelemetryMetadata\Visualization.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
@@ -114,6 +119,9 @@
     <EmbeddedResource Include="..\packages\Newtonsoft.Json.12.0.3\lib\net45\Newtonsoft.Json.dll">
       <Link>ReferencedAssemblies\Newtonsoft.Json.dll</Link>
     </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Models\TelemetryMetadata\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
