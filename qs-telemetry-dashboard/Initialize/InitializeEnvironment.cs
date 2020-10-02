@@ -32,12 +32,34 @@ namespace qs_telemetry_dashboard.Initialize
 			TelemetryDashboardMain.Logger.Log("Running in initialize mode.", LogLevel.Info);
 
 			// get location to copy exe to
+			//todo don't copy if already running in share folder
 			string telemetryPath = Path.Combine(FileLocationManager.GetTelemetrySharePath(), FileLocationManager.TELEMETRY_EXE_FILENAME);
-			if (File.Exists(telemetryPath))
+
+			//todo fix this if condition
+			TelemetryDashboardMain.Logger.Log("Current TelemetryDashboard.exe path: " + FileLocationManager.WorkingTelemetryDashboardExePath, LogLevel.Debug);
+			TelemetryDashboardMain.Logger.Log("Share folder TelemetryDashboard.exe path: " + telemetryPath, LogLevel.Debug);
+			TelemetryDashboardMain.Logger.Log("Share folder TelemetryDashboard.exe root path: " + telemetryPath, LogLevel.Debug);
+
+			if (telemetryPath != FileLocationManager.WorkingTelemetryDashboardExePath)
 			{
-				File.Delete(telemetryPath);
+				bool doCopy = true;
+				if (File.Exists(telemetryPath))
+				{
+					try
+					{
+						File.Delete(telemetryPath);
+					}
+					catch (UnauthorizedAccessException)
+					{
+						TelemetryDashboardMain.Logger.Log(string.Format("Tried to delete '{0}', unauthorizaed access. This probably means you are running this executable and can ignore the error, OR you do not have access to delete this file.", telemetryPath), LogLevel.Debug);
+						doCopy = false;
+					}
+				}
+				if (doCopy)
+				{
+					File.Copy(FileLocationManager.WorkingTelemetryDashboardExePath, telemetryPath);
+				}
 			}
-			File.Copy(FileLocationManager.WorkingTelemetryDashboardExePath, telemetryPath);
 
 
 			TelemetryDashboardMain.Logger.Log("Ready to import app.", LogLevel.Debug);
