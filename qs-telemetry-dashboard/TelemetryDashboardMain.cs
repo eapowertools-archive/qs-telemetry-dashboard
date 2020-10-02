@@ -22,7 +22,8 @@ namespace qs_telemetry_dashboard
 
 		internal static ArgumentManager ArgsManager { get; private set; }
 
-		internal static QlikRepositoryRequester QRSRequest {
+		internal static QlikRepositoryRequester QRSRequest
+		{
 			get
 			{
 				if (_qrsInstance == null)
@@ -162,9 +163,34 @@ namespace qs_telemetry_dashboard
 			}
 			else if (ArgsManager.MetadataFetchRun)
 			{
-				// is it interactive or not, depends if config should exist or not. log accordingly
-				return MetadataFetchRunner.Run();
+				TelemetryConfiguration tConfig;
+				if (ArgsManager.Interactive)
+				{
+					Logger.Log("Running Fetch Metadata in interactive mode.", LogLevel.Info);
+				}
+				else
+				{
+					Logger.Log("Running Fetch Metadata in non-interactive mode.", LogLevel.Info);
+				}
+				if (!ConfigurationManager.TryGetConfiguration(out tConfig))
+				{
+					if (!ArgsManager.Interactive)
+					{
+						Logger.Log("Failed to load configuration file. Metadata fetch must be run in share folder location when running in non-interactive mode. Current working path is: " + FileLocationManager.WorkingDirectory, LogLevel.Error);
+					}
+					else
+					{
+						QlikCredentials creds = IOHelpers.GetCredentials();
+						tConfig = new TelemetryConfiguration();
+						tConfig.QlikClientCertificate = CertificateHelpers.FetchCertificate(creds);
+						tConfig.Hostname = InitializeEnvironment.Hostname;
+					}
+				}
+
+				_qrsInstance = new QlikRepositoryRequester(tConfig);
+
 				// fetch metadata and wriet to csv
+				return MetadataFetchRunner.Run();
 			}
 			else
 			{
