@@ -52,6 +52,6 @@ namespace qs_telemetry_dashboard.MetadataFetch
   //                  entity: "App.Object"
   //                  },
   //              'json')
-		//}
+		}
 	}
 }
