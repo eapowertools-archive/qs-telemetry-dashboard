@@ -32,12 +32,18 @@ namespace qs_telemetry_dashboard.Initialize
 			TelemetryDashboardMain.Logger.Log("Running in initialize mode.", LogLevel.Info);
 
 			// get location to copy exe to
+			//todo don't copy if already running in share folder
 			string telemetryPath = Path.Combine(FileLocationManager.GetTelemetrySharePath(), FileLocationManager.TELEMETRY_EXE_FILENAME);
-			if (File.Exists(telemetryPath))
+
+			//todo fix this if condition
+			if (telemetryPath != FileLocationManager.WorkingTelemetryDashboardExePath)
 			{
-				File.Delete(telemetryPath);
+				if (File.Exists(telemetryPath))
+				{
+					File.Delete(telemetryPath);
+				}
+				File.Copy(FileLocationManager.WorkingTelemetryDashboardExePath, telemetryPath);
 			}
-			File.Copy(FileLocationManager.WorkingTelemetryDashboardExePath, telemetryPath);
 
 
 			TelemetryDashboardMain.Logger.Log("Ready to import app.", LogLevel.Debug);
