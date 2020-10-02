@@ -168,8 +168,8 @@ namespace qs_telemetry_dashboard.MetadataFetch
 				{
 					throw new InvalidResponseException(sheetResponse.Item1.ToString() + " returned when trying to get sheets. Request failed.");
 				}
-				JArray returnedSheets = JArray.Parse(sheetResponse.Item2);
-				foreach (JObject sheet in returnedSheets)
+				JArray returnedSheets = JObject.Parse(sheetResponse.Item2).Value<JArray>("rows");
+				foreach (JArray sheet in returnedSheets)
 				{
 					allSheets.Add(new UnparsedSheet(sheet[0].ToObject<Guid>(), sheet[1].ToString(), sheet[2].ToString(), sheet[3].ToObject<Guid>(), sheet[4].ToObject<bool>(), sheet[5].ToObject<bool>()));
 				}
