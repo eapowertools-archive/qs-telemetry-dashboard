@@ -40,7 +40,7 @@ namespace qs_telemetry_dashboard.MetadataFetch
 			newMetadata = new TelemetryMetadata(true);
 
 			//GetRepositoryApps(newMetadata);
-			GetRepositorySheets(newMetadata);
+			IList<UnparsedSheet> unparsedSheets = GetRepositorySheets();
 
 			string outputPath = Path.Combine(FileLocationManager.GetTelemetrySharePath(), FileLocationManager.TELEMETRY_OUTPUT_FOLDER);
 			throw new NotImplementedException();
@@ -72,16 +72,6 @@ namespace qs_telemetry_dashboard.MetadataFetch
 						},
 						{
 							'columnType': 'Property',
-							'definition': 'published',
-							'name': 'published'
-						},
-{
-							'columnType': 'Property',
-							'definition': 'published',
-							'name': 'published'
-						},
-						{
-							'columnType': 'Property',
 							'definition': 'owner.id',
 							'name': 'owner.id'
 						},
@@ -90,27 +80,24 @@ namespace qs_telemetry_dashboard.MetadataFetch
 							'definition': 'published',
 							'name': 'published'
 						},
+{
+							'columnType': 'Property',
+							'definition': 'published',
+							'name': 'published'
+						},
+						
 						{
 							'columnType': 'Property',
-							'definition': 'approved',
-							'name': 'approved'
+							'definition': 'stream.id',
+							'name': 'stream.id'
+						},
+						{
+							'columnType': 'Property',
+							'definition': 'stream.name',
+							'name': 'stream.name'
 						}],
-						'entity': 'App.Object'
+						'entity': 'App'
 				}";
-
-			//internal Guid ID { get; set; }
-
-			//internal string Name { get; set; }
-
-			//internal bool Published { get; set; }
-
-			//internal DateTime PublishedDateTime { get; set; }
-
-			//internal Guid StreamID { get; set; }
-
-			//internal string StreamName { get; set; }
-
-			//internal Guid AppOwner { get; set; }
 
 			int startLocation = 0;
 			Tuple<HttpStatusCode, string> appResponse;
@@ -124,13 +111,22 @@ namespace qs_telemetry_dashboard.MetadataFetch
 				JArray returnedApps = JArray.Parse(appResponse.Item2);
 				foreach (JObject app in returnedApps)
 				{
-					metadataObject.Apps.Add(new App());
-					//allSheets.Add(new UnparsedSheet(sheet[0].ToObject<Guid>(), sheet[1].ToString(), sheet[2].ToString(), sheet[3].ToObject<Guid>(), sheet[4].ToObject<bool>(), sheet[5].ToObject<bool>()));
+					bool published = app[3].ToObject<bool>();
+					App newApp;
+					if (!published)
+					{
+						newApp = new App(app[1].ToString(), app[2].ToObject<Guid>(), published);
+					}
+					else
+					{
+						newApp = new App(app[1].ToString(), app[2].ToObject<Guid>(), published, app[4].ToObject<DateTime>(), app[5].ToObject<Guid>(), app[6].ToString());
+					}
+					metadataObject.Apps.Add(app[0].ToObject<Guid>(), newApp);
 				}
 			} while (startLocation < appCount);
 		}
 
-		internal static void GetRepositorySheets()
+		internal static IList<UnparsedSheet> GetRepositorySheets()
 		{
 			TelemetryDashboardMain.Logger.Log("Fetching all sheets.", LogLevel.Info);
 			Tuple<HttpStatusCode, string> numberOfSheets = TelemetryDashboardMain.QRSRequest.MakeRequest("/app/object/count?filter=objectType eq 'sheet'", HttpMethod.Get);
@@ -145,6 +141,11 @@ namespace qs_telemetry_dashboard.MetadataFetch
 				{
 					'columns':
 						[{
+							'columnType': 'Property',
+							'definition': 'id',
+							'name': 'id'
+						},
+						{
 							'columnType': 'Property',
 							'definition': 'app.id',
 							'name': 'app.id'
@@ -190,9 +191,11 @@ namespace qs_telemetry_dashboard.MetadataFetch
 				JArray returnedSheets = JObject.Parse(sheetResponse.Item2).Value<JArray>("rows");
 				foreach (JArray sheet in returnedSheets)
 				{
-					allSheets.Add(new UnparsedSheet(sheet[0].ToObject<Guid>(), sheet[1].ToString(), sheet[2].ToString(), sheet[3].ToObject<Guid>(), sheet[4].ToObject<bool>(), sheet[5].ToObject<bool>()));
+					allSheets.Add(new UnparsedSheet(sheet[0].ToObject<Guid>(), sheet[1].ToObject<Guid>(), sheet[2].ToString(), sheet[3].ToString(), sheet[4].ToObject<Guid>(), sheet[5].ToObject<bool>(), sheet[6].ToObject<bool>()));
 				}
 			} while (startLocation < sheetCount);
+
+			return allSheets;
 		}
 	}
 }

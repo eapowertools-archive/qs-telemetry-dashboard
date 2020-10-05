@@ -3,6 +3,7 @@ namespace qs_telemetry_dashboard.Models.TelemetryMetadata.UnparsedObject
 {
 	internal class UnparsedSheet
 	{
+		internal Guid ID { get; private set; }
 		internal Guid AppID { get; private set; }
 
 		internal string EngineObjectID { get; private set; }
@@ -15,8 +16,9 @@ namespace qs_telemetry_dashboard.Models.TelemetryMetadata.UnparsedObject
 
 		internal bool Approved { get; private set; }
 
-		internal UnparsedSheet(Guid appID, string engineObjectId, string name, Guid ownerID, bool published, bool approved)
+		internal UnparsedSheet(Guid id, Guid appID, string engineObjectId, string name, Guid ownerID, bool published, bool approved)
 		{
+			ID = id;
 			AppID = appID;
 			EngineObjectID = engineObjectId;
 			Name = name;

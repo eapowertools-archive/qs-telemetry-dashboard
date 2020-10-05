@@ -12,7 +12,7 @@ namespace qs_telemetry_dashboard.Models.TelemetryMetadata
 
 		internal IList<User> Users { get; set; }
 
-		internal IList<App> Apps { get; set; }
+		internal IDictionary<Guid, App> Apps { get; set; }
 
 		internal TelemetryMetadata()
 		{
@@ -22,7 +22,7 @@ namespace qs_telemetry_dashboard.Models.TelemetryMetadata
 			}
 			EngineInfos = new List<EngineInfo>();
 			Users = new List<User>();
-			Apps = new List<App>();
+			Apps = new Dictionary<Guid, App>();
 		}
 
 		internal TelemetryMetadata(bool updateTime) : base()
