@@ -39,7 +39,7 @@ namespace qs_telemetry_dashboard.MetadataFetch
 
 			newMetadata = new TelemetryMetadata(true);
 
-			//GetRepositoryApps(newMetadata);
+			GetRepositoryApps(newMetadata);
 			IList<UnparsedSheet> unparsedSheets = GetRepositorySheets();
 
 			string outputPath = Path.Combine(FileLocationManager.GetTelemetrySharePath(), FileLocationManager.TELEMETRY_OUTPUT_FOLDER);
