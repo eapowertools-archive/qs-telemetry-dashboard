@@ -180,10 +180,20 @@ namespace qs_telemetry_dashboard
 					}
 					else
 					{
-						QlikCredentials creds = IOHelpers.GetCredentials();
-						tConfig = new TelemetryConfiguration();
-						tConfig.QlikClientCertificate = CertificateHelpers.FetchCertificate(creds);
-						tConfig.Hostname = InitializeEnvironment.Hostname;
+						if (!string.IsNullOrEmpty(ArgsManager.ConfigPath))
+						{
+							if (!ConfigurationManager.TryGetConfiguration(out tConfig, ArgsManager.ConfigPath))
+							{
+								Logger.Log(string.Format("Failed to get config from '{0}' with -configpath flag.", ArgsManager.ConfigPath), LogLevel.Error);
+							}
+						}
+						else
+						{
+							QlikCredentials creds = IOHelpers.GetCredentials();
+							tConfig = new TelemetryConfiguration();
+							tConfig.QlikClientCertificate = CertificateHelpers.FetchCertificate(creds);
+							tConfig.Hostname = InitializeEnvironment.Hostname;
+						}
 					}
 				}
 

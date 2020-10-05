@@ -15,6 +15,7 @@ namespace qs_telemetry_dashboard
 		internal bool UpdateCertificateRun { get; }
 		internal bool InitializeRun { get; }
 		internal bool MetadataFetchRun { get; }
+		internal string ConfigPath { get; }
 
 
 		internal const string HELP_STRING =
@@ -34,6 +35,7 @@ Arguments:
 			UpdateCertificateRun = false;
 			InitializeRun = false;
 			MetadataFetchRun = false;
+			ConfigPath = "";
 
 			if (args.Length == 0)
 			{
@@ -115,6 +117,12 @@ Arguments:
 				{
 					argDic.Remove("-initialize");
 					InitializeRun = true;
+				}
+
+				if (argDic.TryGetValue("configpath", out argValue))
+				{
+					argDic.Remove("configpath");
+					ConfigPath = argValue;
 				}
 
 

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using qs_telemetry_dashboard.Models.TelemetryMetadata.UnparsedObject;
+using System;
 using System.Collections.Generic;
 
 namespace qs_telemetry_dashboard.Models.TelemetryMetadata
@@ -25,7 +26,7 @@ namespace qs_telemetry_dashboard.Models.TelemetryMetadata
 			Apps = new Dictionary<Guid, App>();
 		}
 
-		internal TelemetryMetadata(bool updateTime) : base()
+		internal TelemetryMetadata(bool updateTime) : this()
 		{
 			if (updateTime)
 			{
@@ -37,6 +38,11 @@ namespace qs_telemetry_dashboard.Models.TelemetryMetadata
 		{
 			// write all the data to disk.
 			return true;
+		}
+
+		internal void ParseSheets(IList<UnparsedSheet> unparsedSheets)
+		{
+			throw new NotImplementedException();
 		}
 	}
 }

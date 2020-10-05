@@ -41,9 +41,10 @@ namespace qs_telemetry_dashboard.MetadataFetch
 
 			GetRepositoryApps(newMetadata);
 			IList<UnparsedSheet> unparsedSheets = GetRepositorySheets();
+			newMetadata.ParseSheets(unparsedSheets);
 
 			string outputPath = Path.Combine(FileLocationManager.GetTelemetrySharePath(), FileLocationManager.TELEMETRY_OUTPUT_FOLDER);
-			throw new NotImplementedException();
+
 		}
 
 		internal static void GetRepositoryApps(TelemetryMetadata metadataObject)
@@ -82,8 +83,8 @@ namespace qs_telemetry_dashboard.MetadataFetch
 						},
 {
 							'columnType': 'Property',
-							'definition': 'published',
-							'name': 'published'
+							'definition': 'publishtime',
+							'name': 'publishtime'
 						},
 						
 						{
@@ -108,8 +109,8 @@ namespace qs_telemetry_dashboard.MetadataFetch
 				{
 					throw new InvalidResponseException(appResponse.Item1.ToString() + " returned when trying to get apps. Request failed.");
 				}
-				JArray returnedApps = JArray.Parse(appResponse.Item2);
-				foreach (JObject app in returnedApps)
+				JArray returnedApps = JObject.Parse(appResponse.Item2).Value<JArray>("rows");
+				foreach (JArray app in returnedApps)
 				{
 					bool published = app[3].ToObject<bool>();
 					App newApp;
@@ -123,7 +124,7 @@ namespace qs_telemetry_dashboard.MetadataFetch
 					}
 					metadataObject.Apps.Add(app[0].ToObject<Guid>(), newApp);
 				}
-			} while (startLocation < appCount);
+			} while ((startLocation+PAGESIZE) < appCount);
 		}
 
 		internal static IList<UnparsedSheet> GetRepositorySheets()
@@ -193,7 +194,7 @@ namespace qs_telemetry_dashboard.MetadataFetch
 				{
 					allSheets.Add(new UnparsedSheet(sheet[0].ToObject<Guid>(), sheet[1].ToObject<Guid>(), sheet[2].ToString(), sheet[3].ToString(), sheet[4].ToObject<Guid>(), sheet[5].ToObject<bool>(), sheet[6].ToObject<bool>()));
 				}
-			} while (startLocation < sheetCount);
+			} while ((startLocation+PAGESIZE) < sheetCount);
 
 			return allSheets;
 		}

@@ -17,9 +17,17 @@ namespace qs_telemetry_dashboard.Helpers
 			}
 		}
 
-		internal static bool TryGetConfiguration(out TelemetryConfiguration telemetryDashboardConfig)
+		internal static bool TryGetConfiguration(out TelemetryConfiguration telemetryDashboardConfig, string overridePath = null)
 		{
-			string configPath = Path.Combine(FileLocationManager.WorkingDirectory, FileLocationManager.TELEMETRY_CONFIG_FILENAME);
+			string configPath;
+			if (string.IsNullOrEmpty(overridePath))
+			{
+				configPath = Path.Combine(FileLocationManager.WorkingDirectory, FileLocationManager.TELEMETRY_CONFIG_FILENAME);
+			}
+			else
+			{
+				configPath = overridePath;
+			}
 			TelemetryDashboardMain.Logger.Log("Trying to get config file: " + configPath, LogLevel.Debug);
 			if (!File.Exists(configPath))
 			{

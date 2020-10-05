@@ -23,6 +23,7 @@ namespace qs_telemetry_dashboard.Models.TelemetryMetadata
 		internal App(string name, Guid appOwner, bool published)
 		{
 			this.Name = name;
+			this.AppOwner = appOwner;
 			this.Published = published;
 		}
 
