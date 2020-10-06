@@ -18,10 +18,16 @@ namespace qs_telemetry_dashboard.ModelWriter
 
 		internal static void WriteMetadataToFile(TelemetryMetadata meta)
 		{
-
+			// check to see if folder exists
+			string outputDir = Path.Combine(FileLocationManager.GetTelemetrySharePath(), FileLocationManager.TELEMETRY_OUTPUT_FOLDER_NAME);
+			if (!Directory.Exists(outputDir))
+			{
+				Directory.CreateDirectory(outputDir);
+			}
+			WriteAppsMetadataFile(meta);
 		}
 
-		internal static void WriteAppsMetadataFile(TelemetryMetadata meta)
+		private static void WriteAppsMetadataFile(TelemetryMetadata meta)
 		{
 			StringBuilder sb = new StringBuilder();
 
@@ -51,7 +57,7 @@ namespace qs_telemetry_dashboard.ModelWriter
 			WriteFile(sb, Path.Combine(FileLocationManager.GetTelemetrySharePath(), FileLocationManager.TELEMETRY_OUTPUT_FOLDER_NAME, FileLocationManager.METADATA_APPS_FILE_NAME));
 		}
 
-		internal static void WriteHeaders(StringBuilder sb, string[] headers)
+		private static void WriteHeaders(StringBuilder sb, string[] headers)
 		{
 			for (int i = 0; i < headers.Length; i++)
 			{
@@ -66,7 +72,7 @@ namespace qs_telemetry_dashboard.ModelWriter
 			}
 		}
 
-		internal static void WriteFile(StringBuilder sb, string filepath)
+		private static void WriteFile(StringBuilder sb, string filepath)
 		{
 			System.IO.File.WriteAllText(filepath, sb.ToString());
 

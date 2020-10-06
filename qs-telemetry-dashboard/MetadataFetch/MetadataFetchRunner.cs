@@ -11,6 +11,7 @@ using qs_telemetry_dashboard.Helpers;
 using qs_telemetry_dashboard.Logging;
 using qs_telemetry_dashboard.Models.TelemetryMetadata;
 using qs_telemetry_dashboard.Models.TelemetryMetadata.UnparsedObject;
+using qs_telemetry_dashboard.ModelWriter;
 
 namespace qs_telemetry_dashboard.MetadataFetch
 {
@@ -43,7 +44,7 @@ namespace qs_telemetry_dashboard.MetadataFetch
 			IList<UnparsedSheet> unparsedSheets = GetRepositorySheets();
 			newMetadata.ParseSheets(unparsedSheets);
 
-			string outputPath = Path.Combine(FileLocationManager.GetTelemetrySharePath(), FileLocationManager.TELEMETRY_OUTPUT_FOLDER_NAME);
+			MetadataWriter.WriteMetadataToFile(newMetadata);
 
 			return 0;
 		}

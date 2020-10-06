@@ -34,15 +34,9 @@ namespace qs_telemetry_dashboard.Models.TelemetryMetadata
 			}
 		}
 
-		internal bool WriteToDisk()
-		{
-			// write all the data to disk.
-			return true;
-		}
-
 		internal void ParseSheets(IList<UnparsedSheet> unparsedSheets)
 		{
-			throw new NotImplementedException();
+			//throw new NotImplementedException();
 		}
 	}
 }
