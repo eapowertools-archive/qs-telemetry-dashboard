@@ -18,8 +18,13 @@ namespace qs_telemetry_dashboard.Models.TelemetryMetadata
 
 		internal IList<Visualization> Visualizations { get; set; }
 
-		internal Sheet()
+		internal Sheet(string engineObjectId, string name, Guid ownerId, bool published, bool approved)
 		{
+			this.EngineObjectID = engineObjectId;
+			this.Name = name;
+			this.OwnerID = ownerId;
+			this.Published = published;
+			this.Approved = approved;
 		}
 	}
 }

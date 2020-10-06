@@ -25,6 +25,7 @@ namespace qs_telemetry_dashboard.Models.TelemetryMetadata
 			this.Name = name;
 			this.AppOwnerID = appOwnerId;
 			this.Published = published;
+			this.Sheets = new Dictionary<Guid, Sheet>();
 		}
 
 		internal App(string name, Guid appOwnerId, bool published, DateTime publishedDate, Guid streamID, string streamName) : this(name, appOwnerId, published)
