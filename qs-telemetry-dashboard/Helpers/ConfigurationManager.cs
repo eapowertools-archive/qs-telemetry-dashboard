@@ -22,7 +22,7 @@ namespace qs_telemetry_dashboard.Helpers
 			string configPath;
 			if (string.IsNullOrEmpty(overridePath))
 			{
-				configPath = Path.Combine(FileLocationManager.WorkingDirectory, FileLocationManager.TELEMETRY_CONFIG_FILENAME);
+				configPath = Path.Combine(FileLocationManager.WorkingDirectory, FileLocationManager.CONFIG_FILE_NAME);
 			}
 			else
 			{
@@ -47,7 +47,7 @@ namespace qs_telemetry_dashboard.Helpers
 
 		internal static void SaveConfiguration(TelemetryConfiguration tConfig)
 		{
-			string configPath = Path.Combine(FileLocationManager.GetTelemetrySharePath(), FileLocationManager.TELEMETRY_CONFIG_FILENAME);
+			string configPath = Path.Combine(FileLocationManager.GetTelemetrySharePath(), FileLocationManager.CONFIG_FILE_NAME);
 
 			if (File.Exists(configPath))
 			{

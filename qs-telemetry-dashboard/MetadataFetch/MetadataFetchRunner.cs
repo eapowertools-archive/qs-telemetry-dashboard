@@ -21,7 +21,7 @@ namespace qs_telemetry_dashboard.MetadataFetch
 		internal static int Run()
 		{
 			// check to see if metadata binary exists
-			string telemetryMetadataFile = Path.Combine(FileLocationManager.GetTelemetrySharePath(), FileLocationManager.TELEMETRY_METADATA_BINARY);
+			string telemetryMetadataFile = Path.Combine(FileLocationManager.GetTelemetrySharePath(), FileLocationManager.METADATA_BINARY_FILE_NAME);
 			TelemetryDashboardMain.Logger.Log("Trying to get metadata binary file: " + telemetryMetadataFile, LogLevel.Debug);
 			TelemetryMetadata oldMeta, newMetadata;
 			if (File.Exists(telemetryMetadataFile))
@@ -43,8 +43,9 @@ namespace qs_telemetry_dashboard.MetadataFetch
 			IList<UnparsedSheet> unparsedSheets = GetRepositorySheets();
 			newMetadata.ParseSheets(unparsedSheets);
 
-			string outputPath = Path.Combine(FileLocationManager.GetTelemetrySharePath(), FileLocationManager.TELEMETRY_OUTPUT_FOLDER);
+			string outputPath = Path.Combine(FileLocationManager.GetTelemetrySharePath(), FileLocationManager.TELEMETRY_OUTPUT_FOLDER_NAME);
 
+			return 0;
 		}
 
 		internal static void GetRepositoryApps(TelemetryMetadata metadataObject)
