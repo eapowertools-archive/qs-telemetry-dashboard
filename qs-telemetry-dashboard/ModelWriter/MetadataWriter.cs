@@ -24,7 +24,9 @@ namespace qs_telemetry_dashboard.ModelWriter
 			{
 				Directory.CreateDirectory(outputDir);
 			}
+
 			WriteAppsMetadataFile(meta);
+			WriteSheetsMetadataFile(meta);
 		}
 
 		private static void WriteAppsMetadataFile(TelemetryMetadata meta)
@@ -55,6 +57,34 @@ namespace qs_telemetry_dashboard.ModelWriter
 			}
 
 			WriteFile(sb, Path.Combine(FileLocationManager.GetTelemetrySharePath(), FileLocationManager.TELEMETRY_OUTPUT_FOLDER_NAME, FileLocationManager.METADATA_APPS_FILE_NAME));
+		}
+
+		private static void WriteSheetsMetadataFile(TelemetryMetadata meta)
+		{
+			StringBuilder sb = new StringBuilder();
+
+			WriteHeaders(sb, HEADERS_SHEETS);
+
+			foreach (KeyValuePair<Guid, App> app in meta.Apps)
+			{
+				sb.Append(app.Key.ToString());
+				sb.Append(CSV_SEPARATOR);
+				foreach (KeyValuePair<Guid, Sheet> sheet in app.Value.Sheets)
+				{
+					sb.Append(sheet.Key.ToString());
+					sb.Append(CSV_SEPARATOR);
+					sb.Append(sheet.Value.Name);
+					sb.Append(CSV_SEPARATOR);
+					sb.Append(sheet.Value.OwnerID);
+					sb.Append(CSV_SEPARATOR);
+					sb.Append(sheet.Value.Published);
+					sb.Append(CSV_SEPARATOR);
+					sb.Append(sheet.Value.Approved);
+				}
+				sb.Append('\n');
+			}
+
+			WriteFile(sb, Path.Combine(FileLocationManager.GetTelemetrySharePath(), FileLocationManager.TELEMETRY_OUTPUT_FOLDER_NAME, FileLocationManager.METADATA_SHEETS_FILE_NAME));
 		}
 
 		private static void WriteHeaders(StringBuilder sb, string[] headers)
