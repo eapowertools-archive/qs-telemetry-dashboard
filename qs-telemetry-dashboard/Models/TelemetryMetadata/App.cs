@@ -8,7 +8,7 @@ namespace qs_telemetry_dashboard.Models.TelemetryMetadata
 	{
 		internal string Name { get; set; }
 
-		internal Guid AppOwner { get; set; }
+		internal Guid AppOwnerID { get; set; }
 
 		internal bool Published { get; set; }
 
@@ -20,14 +20,14 @@ namespace qs_telemetry_dashboard.Models.TelemetryMetadata
 
 		internal IDictionary<Guid, Sheet> Sheets { get; set; }
 
-		internal App(string name, Guid appOwner, bool published)
+		internal App(string name, Guid appOwnerId, bool published)
 		{
 			this.Name = name;
-			this.AppOwner = appOwner;
+			this.AppOwnerID = appOwnerId;
 			this.Published = published;
 		}
 
-		internal App(string name, Guid appOwner, bool published, DateTime publishedDate, Guid streamID, string streamName) : this(name, appOwner, published)
+		internal App(string name, Guid appOwnerId, bool published, DateTime publishedDate, Guid streamID, string streamName) : this(name, appOwnerId, published)
 		{
 			this.PublishedDateTime = publishedDate;
 			this.StreamID = streamID;

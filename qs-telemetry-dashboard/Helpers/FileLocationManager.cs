@@ -11,11 +11,14 @@ namespace qs_telemetry_dashboard.Helpers
 {
 	internal class FileLocationManager
 	{
-		internal static string TELEMETRY_FOLDER = "TelemetryDashboard";
-		internal static string TELEMETRY_OUTPUT_FOLDER = "output";
-		internal static string TELEMETRY_EXE_FILENAME = "TelemetryDashboard.exe";
-		internal static string TELEMETRY_CONFIG_FILENAME = "config.tdc";
-		internal static string TELEMETRY_METADATA_BINARY = "metadata.tdm";
+		internal static string TELEMETRY_FOLDER_NAME = "TelemetryDashboard";
+		internal static string TELEMETRY_OUTPUT_FOLDER_NAME = "output";
+		internal static string TELEMETRY_EXE_FILE_NAME = "TelemetryDashboard.exe";
+		internal static string CONFIG_FILE_NAME = "config.tdc";
+		internal static string METADATA_BINARY_FILE_NAME = "metadata.tdm";
+
+		internal static string METADATA_APPS_FILE_NAME = "apps.csv";
+		internal static string METADATA_SHEETS_FILE_NAME = "sheets.csv";
 
 		internal static string WorkingDirectory
 		{
@@ -54,7 +57,7 @@ namespace qs_telemetry_dashboard.Helpers
 
 			string shareRootPath = listOfServiceClusters[0]["settings"]["sharedPersistenceProperties"]["rootFolder"].ToString();
 
-			return Path.Combine(shareRootPath, TELEMETRY_FOLDER);
+			return Path.Combine(shareRootPath, TELEMETRY_FOLDER_NAME);
 		}
 	}
 }

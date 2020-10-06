@@ -92,6 +92,7 @@
     <Compile Include="Models\TelemetryMetadata\Visualization.cs" />
     <Compile Include="Models\TelemetryMetadata\EngineInfo.cs" />
     <Compile Include="Models\TelemetryMetadata\UnparsedObject\UnparsedSheet.cs" />
+    <Compile Include="ModelWriter\MetadataWriter.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
@@ -123,5 +124,8 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup />
+  <ItemGroup>
+    <Folder Include="ModelWriter\" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
