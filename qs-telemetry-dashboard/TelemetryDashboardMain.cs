@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
 using System.Reflection;
@@ -35,7 +36,8 @@ namespace qs_telemetry_dashboard
 		}
 		private static Assembly CurrentDomain_AssemblyResolve(object sender, ResolveEventArgs args)
 		{
-			using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("qs_telemetry_dashboard.ReferencedAssemblies.Newtonsoft.Json.dll"))
+			string assemblyName = args.Name.Split(',')[0];
+			using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("qs_telemetry_dashboard.ReferencedAssemblies." + assemblyName + ".dll"))
 			{
 				var assemblyData = new Byte[stream.Length];
 				stream.Read(assemblyData, 0, assemblyData.Length);
@@ -51,8 +53,16 @@ namespace qs_telemetry_dashboard
 
 			Console.WriteLine("Listing Embedded Resource Names");
 
+			List<string> dllsToLoad = new List<string>();
+
 			foreach (var resource in Assembly.GetExecutingAssembly().GetManifestResourceNames())
-			{ Console.WriteLine("Resource: " + resource); }
+			{
+				Console.WriteLine("Resource: " + resource);
+				if (resource.EndsWith(".dll"))
+				{
+
+				}
+			}
 
 			bool isCMDRun = GetConsoleProcessList(new uint[1], 1) == 2;
 			try
@@ -106,9 +116,8 @@ namespace qs_telemetry_dashboard
 			else if (ArgsManager.UpdateCertificateRun)
 			{
 				// doneish, needs to be testing and logged
-				QlikCredentials creds = IOHelpers.GetCredentials();
 				TelemetryConfiguration tConfig = new TelemetryConfiguration();
-				tConfig.QlikClientCertificate = CertificateHelpers.FetchCertificate(creds);
+				tConfig.QlikClientCertificate = CertificateHelpers.FetchCertificate();
 				tConfig.Hostname = InitializeEnvironment.Hostname;
 				_qrsInstance = new QlikRepositoryRequester(tConfig);
 				ConfigurationManager.SaveConfiguration(tConfig);
@@ -122,9 +131,8 @@ namespace qs_telemetry_dashboard
 				if (!ConfigurationManager.TryGetConfiguration(out tConfig))
 				{
 					Logger.Log("Failed to get configuration from '" + FileLocationManager.WorkingDirectory + "'. Will need user credentials.", LogLevel.Info);
-					QlikCredentials creds = IOHelpers.GetCredentials();
 					tConfig = new TelemetryConfiguration();
-					tConfig.QlikClientCertificate = CertificateHelpers.FetchCertificate(creds);
+					tConfig.QlikClientCertificate = CertificateHelpers.FetchCertificate();
 					tConfig.Hostname = InitializeEnvironment.Hostname;
 				}
 
@@ -148,9 +156,8 @@ namespace qs_telemetry_dashboard
 
 				// validate they want to proceed, will overwrite all existing setup
 
-				QlikCredentials creds = IOHelpers.GetCredentials();
 				TelemetryConfiguration tConfig = new TelemetryConfiguration();
-				tConfig.QlikClientCertificate = CertificateHelpers.FetchCertificate(creds);
+				tConfig.QlikClientCertificate = CertificateHelpers.FetchCertificate();
 				tConfig.Hostname = InitializeEnvironment.Hostname;
 				_qrsInstance = new QlikRepositoryRequester(tConfig);
 
@@ -189,9 +196,8 @@ namespace qs_telemetry_dashboard
 						}
 						else
 						{
-							QlikCredentials creds = IOHelpers.GetCredentials();
 							tConfig = new TelemetryConfiguration();
-							tConfig.QlikClientCertificate = CertificateHelpers.FetchCertificate(creds);
+							tConfig.QlikClientCertificate = CertificateHelpers.FetchCertificate();
 							tConfig.Hostname = InitializeEnvironment.Hostname;
 						}
 					}
@@ -214,9 +220,7 @@ namespace qs_telemetry_dashboard
 			TelemetryConfiguration configuration = new TelemetryConfiguration();
 			configuration.Hostname = InitializeEnvironment.Hostname;
 			Logger.Log("Test Credential Mode", LogLevel.Debug);
-			QlikCredentials creds = IOHelpers.GetCredentials();
-			Logger.Log(string.Format("Credentials entered, attempting to fetch Qlik client certificate with user {0}\\{1}.", creds.UserDirectory, creds.UserName), LogLevel.Debug);
-			configuration.QlikClientCertificate = CertificateHelpers.FetchCertificate(creds);
+			configuration.QlikClientCertificate = CertificateHelpers.FetchCertificate();
 			if (configuration.QlikClientCertificate == null)
 			{
 				Logger.Log("Failed to fetch certificate.", LogLevel.Error);

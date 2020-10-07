@@ -53,6 +53,10 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="BouncyCastle.Crypto, Version=1.8.6.0, Culture=neutral, PublicKeyToken=0e99375e54769942">
+      <HintPath>..\packages\BouncyCastle.1.8.6.1\lib\BouncyCastle.Crypto.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="Newtonsoft.Json, Version=12.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <HintPath>..\packages\Newtonsoft.Json.12.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
       <Private>False</Private>
@@ -70,7 +74,6 @@
     <Compile Include="Helpers\ConfigurationManager.cs" />
     <Compile Include="Helpers\FileLocationManager.cs" />
     <Compile Include="Initialize\InitializeEnvironment.cs" />
-    <Compile Include="Helpers\IOHelpers.cs" />
     <Compile Include="MetadataFetch\MetadataFetchRunner.cs" />
     <Compile Include="Models\QlikCredentials.cs" />
     <Compile Include="Models\TelemetryConfiguration.cs" />
@@ -123,9 +126,11 @@
       <Link>ReferencedAssemblies\Newtonsoft.Json.dll</Link>
     </EmbeddedResource>
   </ItemGroup>
-  <ItemGroup />
   <ItemGroup>
-    <Folder Include="ModelWriter\" />
+    <EmbeddedResource Include="..\packages\BouncyCastle.1.8.6.1\lib\BouncyCastle.Crypto.dll">
+      <Link>ReferencedAssemblies\BouncyCastle.Crypto.dll</Link>
+    </EmbeddedResource>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

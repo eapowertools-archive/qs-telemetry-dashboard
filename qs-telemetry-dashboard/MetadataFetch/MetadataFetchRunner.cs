@@ -114,19 +114,24 @@ namespace qs_telemetry_dashboard.MetadataFetch
 				JArray returnedApps = JObject.Parse(appResponse.Item2).Value<JArray>("rows");
 				foreach (JArray app in returnedApps)
 				{
+					Guid appID = app[0].ToObject<Guid>();
+					string appName = app[1].ToString();
+					TelemetryDashboardMain.Logger.Log(string.Format("Processing app '{0}' with ID '{1}'", appID, appName), LogLevel.Debug);
+
 					bool published = app[3].ToObject<bool>();
 					App newApp;
 					if (!published)
 					{
-						newApp = new App(app[1].ToString(), app[2].ToObject<Guid>(), published);
+						newApp = new App(appName, app[2].ToObject<Guid>(), published);
 					}
 					else
 					{
-						newApp = new App(app[1].ToString(), app[2].ToObject<Guid>(), published, app[4].ToObject<DateTime>(), app[5].ToObject<Guid>(), app[6].ToString());
+						newApp = new App(appName, app[2].ToObject<Guid>(), published, app[4].ToObject<DateTime>(), app[5].ToObject<Guid>(), app[6].ToString());
 					}
-					metadataObject.Apps.Add(app[0].ToObject<Guid>(), newApp);
+					metadataObject.Apps.Add(appID, newApp);
 				}
-			} while ((startLocation+PAGESIZE) < appCount);
+				startLocation += PAGESIZE;
+			} while (startLocation < appCount);
 		}
 
 		internal static IList<UnparsedSheet> GetRepositorySheets()
@@ -196,7 +201,8 @@ namespace qs_telemetry_dashboard.MetadataFetch
 				{
 					allSheets.Add(new UnparsedSheet(sheet[0].ToObject<Guid>(), sheet[1].ToObject<Guid>(), sheet[2].ToString(), sheet[3].ToString(), sheet[4].ToObject<Guid>(), sheet[5].ToObject<bool>(), sheet[6].ToObject<bool>()));
 				}
-			} while ((startLocation+PAGESIZE) < sheetCount);
+				startLocation += PAGESIZE;
+			} while (startLocation < sheetCount);
 
 			return allSheets;
 		}
