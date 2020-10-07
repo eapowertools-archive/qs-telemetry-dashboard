@@ -10,13 +10,9 @@ namespace qs_telemetry_dashboard
 		internal bool NoArgs { get; }
 		internal bool Interactive { get; }
 		internal bool DebugLog { get; }
-		internal bool TestCredentialRun { get; }
-		internal bool TestConfigurationRun { get; }
-		internal bool UpdateCertificateRun { get; }
+		internal bool TestRun { get; }
 		internal bool InitializeRun { get; }
 		internal bool MetadataFetchRun { get; }
-		internal string ConfigPath { get; }
-
 
 		internal const string HELP_STRING =
 @"Telemetry Dashboard
@@ -30,12 +26,9 @@ Arguments:
 			Interactive = true;
 			NoArgs = false;
 			DebugLog = false;
-			TestConfigurationRun = false;
-			TestCredentialRun = false;
-			UpdateCertificateRun = false;
+			TestRun = false;
 			InitializeRun = false;
 			MetadataFetchRun = false;
-			ConfigPath = "";
 
 			if (args.Length == 0)
 			{
@@ -52,7 +45,8 @@ Arguments:
 			else
 			{
 				Dictionary<string, string> argDic = args.ToDictionary(
-					x => {
+					x =>
+					{
 						if (x.Contains('='))
 						{
 							return x.Split('=')[0].Substring(1);
@@ -62,7 +56,8 @@ Arguments:
 							return x;
 						}
 					},
-					y => {
+					y =>
+					{
 						if (y.Contains('='))
 						{
 							return y.Split('=')[1];
@@ -75,9 +70,9 @@ Arguments:
 
 				string argValue = "";
 
-				if (argDic.TryGetValue("-metadatafetch", out argValue))
+				if (argDic.TryGetValue("-fetchmetadata", out argValue))
 				{
-					argDic.Remove("-metadatafetch");
+					argDic.Remove("-fetchmetadata");
 					MetadataFetchRun = true;
 					Interactive = false;
 				}
@@ -94,35 +89,16 @@ Arguments:
 					DebugLog = true;
 				}
 
-				if (argDic.TryGetValue("-testcredentials", out argValue))
+				if (argDic.TryGetValue("-testrun", out argValue))
 				{
-					argDic.Remove("-testcredentials");
-					TestCredentialRun = true;
+					argDic.Remove("-testrun");
+					TestRun = true;
 					DebugLog = true;
 				}
-
-				if (argDic.TryGetValue("-testconfiguration", out argValue))
-				{
-					argDic.Remove("-testconfiguration");
-					TestConfigurationRun = true;
-					DebugLog = true;
-				}
-				if (argDic.TryGetValue("-updatecertificate", out argValue))
-				{
-					argDic.Remove("-updatecertificate");
-					UpdateCertificateRun = true;
-				}
-
 				if (argDic.TryGetValue("-initialize", out argValue))
 				{
 					argDic.Remove("-initialize");
 					InitializeRun = true;
-				}
-
-				if (argDic.TryGetValue("configpath", out argValue))
-				{
-					argDic.Remove("configpath");
-					ConfigPath = argValue;
 				}
 
 
