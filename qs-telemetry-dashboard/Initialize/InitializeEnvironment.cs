@@ -12,21 +12,6 @@ namespace qs_telemetry_dashboard.Initialize
 {
 	internal class InitializeEnvironment
 	{
-		private static string _hostname;
-
-		internal static string Hostname
-		{
-			get
-			{
-				if (string.IsNullOrEmpty(_hostname))
-				{
-					string hostnameBase64 = File.ReadAllText(@"C:\ProgramData\Qlik\Sense\Host.cfg");
-					byte[] data = Convert.FromBase64String(hostnameBase64);
-					_hostname = Encoding.ASCII.GetString(data);
-				}
-				return _hostname;
-			}
-		}
 		internal static int Run()
 		{
 			TelemetryDashboardMain.Logger.Log("Running in initialize mode.", LogLevel.Info);

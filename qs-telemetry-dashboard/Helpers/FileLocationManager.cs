@@ -11,6 +11,8 @@ namespace qs_telemetry_dashboard.Helpers
 {
 	internal class FileLocationManager
 	{
+		internal static string HOST_CONFIG_PATH = @"C:\ProgramData\Qlik\Sense\Host.cfg";
+
 		internal static string TELEMETRY_FOLDER_NAME = "TelemetryDashboard";
 		internal static string TELEMETRY_OUTPUT_FOLDER_NAME = "output";
 		internal static string TELEMETRY_EXE_FILE_NAME = "TelemetryDashboard.exe";

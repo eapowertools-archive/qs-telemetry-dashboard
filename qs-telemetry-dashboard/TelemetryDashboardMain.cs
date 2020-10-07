@@ -10,7 +10,6 @@ using qs_telemetry_dashboard.Helpers;
 using qs_telemetry_dashboard.Initialize;
 using qs_telemetry_dashboard.Logging;
 using qs_telemetry_dashboard.MetadataFetch;
-using qs_telemetry_dashboard.Models;
 
 namespace qs_telemetry_dashboard
 {
@@ -49,21 +48,10 @@ namespace qs_telemetry_dashboard
 
 		static int Main(string[] args)
 		{
+			// Load dlls
 			AppDomain.CurrentDomain.AssemblyResolve += CurrentDomain_AssemblyResolve;
 
-			Console.WriteLine("Listing Embedded Resource Names");
-
-			List<string> dllsToLoad = new List<string>();
-
-			foreach (var resource in Assembly.GetExecutingAssembly().GetManifestResourceNames())
-			{
-				Console.WriteLine("Resource: " + resource);
-				if (resource.EndsWith(".dll"))
-				{
-
-				}
-			}
-
+			// Setup Args and Logging
 			bool isCMDRun = GetConsoleProcessList(new uint[1], 1) == 2;
 			try
 			{
@@ -102,108 +90,50 @@ namespace qs_telemetry_dashboard
 			Logger.Log("Arguments handled and logging initialized.", LogLevel.Info);
 			Logger.Log("Current working directory: " + FileLocationManager.WorkingDirectory, LogLevel.Debug);
 
+			// Get certificates and set up QRS Requester
+			_qrsInstance = new QlikRepositoryRequester(CertificateHelpers.Hostname, CertificateHelpers.FetchCertificate());
+
+			// Main 
+
 			if (ArgsManager.NoArgs)
 			{
 				Console.WriteLine(ArgumentManager.HELP_STRING);
 				return 0;
 			}
-			else if (ArgsManager.TestCredentialRun)
+			else if (ArgsManager.TestRun)
 			{
-				// this one is done, but needs logging.
-				return TestCredentialRun();
-			}
-			// wrap stuff in try catches and catch exceptions
-			else if (ArgsManager.UpdateCertificateRun)
-			{
-				// doneish, needs to be testing and logged
-				TelemetryConfiguration tConfig = new TelemetryConfiguration();
-				tConfig.QlikClientCertificate = CertificateHelpers.FetchCertificate();
-				tConfig.Hostname = InitializeEnvironment.Hostname;
-				_qrsInstance = new QlikRepositoryRequester(tConfig);
-				ConfigurationManager.SaveConfiguration(tConfig);
-				return 0;
-			}
-			else if (ArgsManager.TestConfigurationRun)
-			{
-				// try to load from file.
-				// validate you could get the config file
-				TelemetryConfiguration tConfig;
-				if (!ConfigurationManager.TryGetConfiguration(out tConfig))
+				Logger.Log("Test Mode:", LogLevel.Info);
+				Logger.Log("Checking to see if repository is running.", LogLevel.Info);
+				Tuple<bool, HttpStatusCode> responseIsRunning = _qrsInstance.IsRepositoryRunning();
+				if (responseIsRunning.Item1)
 				{
-					Logger.Log("Failed to get configuration from '" + FileLocationManager.WorkingDirectory + "'. Will need user credentials.", LogLevel.Info);
-					tConfig = new TelemetryConfiguration();
-					tConfig.QlikClientCertificate = CertificateHelpers.FetchCertificate();
-					tConfig.Hostname = InitializeEnvironment.Hostname;
-				}
-
-				_qrsInstance = new QlikRepositoryRequester(tConfig);
-
-				Tuple<bool, HttpStatusCode> isRunning = _qrsInstance.IsRepositoryRunning();
-				if (isRunning.Item1)
-				{
-					Logger.Log(isRunning.Item2.ToString() + " returned. Validation successful.", LogLevel.Info);
+					Logger.Log(responseIsRunning.Item2.ToString() + " returned. Validation successful.", LogLevel.Debug);
 					return 0;
 				}
 				else
 				{
-					Logger.Log(isRunning.Item2.ToString() + " returned. Failed to get valid response from Qlik Sense Repository.", LogLevel.Error);
+					Logger.Log(responseIsRunning.Item2.ToString() + " returned. Failed to get valid response from Qlik Sense Repository.", LogLevel.Error);
 					return 1;
 				}
 			}
 			else if (ArgsManager.InitializeRun)
 			{
-				Logger.Log("Initialize flag passed.", LogLevel.Info);
+				Logger.Log("Initialize Mode:", LogLevel.Info);
 
-				// validate they want to proceed, will overwrite all existing setup
-
-				TelemetryConfiguration tConfig = new TelemetryConfiguration();
-				tConfig.QlikClientCertificate = CertificateHelpers.FetchCertificate();
-				tConfig.Hostname = InitializeEnvironment.Hostname;
-				_qrsInstance = new QlikRepositoryRequester(tConfig);
-
-				Logger.Log("Ready to save configuration.", LogLevel.Debug);
-				ConfigurationManager.SaveConfiguration(tConfig);
-
-				// todo copy telemetrydashboard to correct folder
-				Logger.Log("Starting initialize run.", LogLevel.Info);
 				return InitializeEnvironment.Run();
 			}
-			else if (ArgsManager.MetadataFetchRun)
+			else if (ArgsManager.FetchMetadataRun)
 			{
-				TelemetryConfiguration tConfig;
+				Logger.Log("Fetch Metadata Mode:", LogLevel.Info);
+
 				if (ArgsManager.Interactive)
 				{
-					Logger.Log("Running Fetch Metadata in interactive mode.", LogLevel.Info);
+					Logger.Log("Running Fetch Metadata in interactive mode.", LogLevel.Debug);
 				}
 				else
 				{
-					Logger.Log("Running Fetch Metadata in non-interactive mode.", LogLevel.Info);
+					Logger.Log("Running Fetch Metadata in non-interactive mode.", LogLevel.Debug);
 				}
-				if (!ConfigurationManager.TryGetConfiguration(out tConfig))
-				{
-					if (!ArgsManager.Interactive)
-					{
-						Logger.Log("Failed to load configuration file. Metadata fetch must be run in share folder location when running in non-interactive mode. Current working path is: " + FileLocationManager.WorkingDirectory, LogLevel.Error);
-					}
-					else
-					{
-						if (!string.IsNullOrEmpty(ArgsManager.ConfigPath))
-						{
-							if (!ConfigurationManager.TryGetConfiguration(out tConfig, ArgsManager.ConfigPath))
-							{
-								Logger.Log(string.Format("Failed to get config from '{0}' with -configpath flag.", ArgsManager.ConfigPath), LogLevel.Error);
-							}
-						}
-						else
-						{
-							tConfig = new TelemetryConfiguration();
-							tConfig.QlikClientCertificate = CertificateHelpers.FetchCertificate();
-							tConfig.Hostname = InitializeEnvironment.Hostname;
-						}
-					}
-				}
-
-				_qrsInstance = new QlikRepositoryRequester(tConfig);
 
 				// fetch metadata and wriet to csv
 				return MetadataFetchRunner.Run();
@@ -211,33 +141,6 @@ namespace qs_telemetry_dashboard
 			else
 			{
 				Logger.Log("Unhandled argument.", LogLevel.Error);
-				return 1;
-			}
-		}
-
-		private static int TestCredentialRun()
-		{
-			TelemetryConfiguration configuration = new TelemetryConfiguration();
-			configuration.Hostname = InitializeEnvironment.Hostname;
-			Logger.Log("Test Credential Mode", LogLevel.Debug);
-			configuration.QlikClientCertificate = CertificateHelpers.FetchCertificate();
-			if (configuration.QlikClientCertificate == null)
-			{
-				Logger.Log("Failed to fetch certificate.", LogLevel.Error);
-				return 1;
-			}
-			Logger.Log("Successfully got Qlik client certificates.", LogLevel.Debug);
-			Logger.Log("Querying Qlik Sense Repository GET '\\qrs\\about'", LogLevel.Debug);
-			_qrsInstance = new QlikRepositoryRequester(configuration);
-			Tuple<bool, HttpStatusCode> responseIsRunning = _qrsInstance.IsRepositoryRunning();
-			if (responseIsRunning.Item1)
-			{
-				Logger.Log(responseIsRunning.Item2.ToString() + " returned. Validation successful.", LogLevel.Debug);
-				return 0;
-			}
-			else
-			{
-				Logger.Log(responseIsRunning.Item2.ToString() + " returned. Failed to get valid response from Qlik Sense Repository.", LogLevel.Error);
 				return 1;
 			}
 		}

@@ -12,7 +12,7 @@ namespace qs_telemetry_dashboard
 		internal bool DebugLog { get; }
 		internal bool TestRun { get; }
 		internal bool InitializeRun { get; }
-		internal bool MetadataFetchRun { get; }
+		internal bool FetchMetadataRun { get; }
 
 		internal const string HELP_STRING =
 @"Telemetry Dashboard
@@ -28,7 +28,7 @@ Arguments:
 			DebugLog = false;
 			TestRun = false;
 			InitializeRun = false;
-			MetadataFetchRun = false;
+			FetchMetadataRun = false;
 
 			if (args.Length == 0)
 			{
@@ -73,7 +73,7 @@ Arguments:
 				if (argDic.TryGetValue("-fetchmetadata", out argValue))
 				{
 					argDic.Remove("-fetchmetadata");
-					MetadataFetchRun = true;
+					FetchMetadataRun = true;
 					Interactive = false;
 				}
 
