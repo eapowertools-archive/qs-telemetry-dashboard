@@ -36,7 +36,7 @@ namespace qs_telemetry_dashboard.ModelWriter
 
 			WriteHeaders(sb, HEADERS_APPS);
 
-			foreach (KeyValuePair<Guid, App> app in meta.Apps)
+			foreach (KeyValuePair<Guid, QRSApp> app in meta.Apps)
 			{
 				sb.Append(app.Key.ToString());
 				sb.Append(CSV_SEPARATOR);
@@ -66,10 +66,10 @@ namespace qs_telemetry_dashboard.ModelWriter
 
 			WriteHeaders(sb, HEADERS_SHEETS);
 
-			foreach (KeyValuePair<Guid, App> app in meta.Apps)
+			foreach (KeyValuePair<Guid, QRSApp> app in meta.Apps)
 			{
 				
-				foreach (KeyValuePair<Guid, Sheet> sheet in app.Value.Sheets)
+				foreach (KeyValuePair<Guid, QRSSheet> sheet in app.Value.Sheets)
 				{
 					sb.Append(app.Key.ToString());
 					sb.Append(CSV_SEPARATOR);

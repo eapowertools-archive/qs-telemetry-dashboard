@@ -86,7 +86,7 @@
     <Compile Include="ArgumentManager.cs" />
     <Compile Include="Exceptions\ArgumentManagerException.cs" />
     <Compile Include="Exceptions\LoggingException.cs" />
-    <Compile Include="Helpers\CertificateHelpers.cs" />
+    <Compile Include="Helpers\CertificateConfigHelpers.cs" />
     <Compile Include="Helpers\FileLocationManager.cs" />
     <Compile Include="Initialize\InitializeEnvironment.cs" />
     <Compile Include="MetadataFetch\MetadataFetchRunner.cs" />
@@ -102,9 +102,9 @@
     <Compile Include="Exceptions\InvalidResponseException.cs" />
     <Compile Include="ModelWriter\MetadataWriter.cs" />
     <Compile Include="Models\UnparsedObject\UnparsedSheet.cs" />
-    <Compile Include="Models\App.cs" />
+    <Compile Include="Models\QRSApp.cs" />
     <Compile Include="Models\EngineInfo.cs" />
-    <Compile Include="Models\Sheet.cs" />
+    <Compile Include="Models\QRSSheet.cs" />
     <Compile Include="Models\TelemetryMetadata.cs" />
     <Compile Include="Models\User.cs" />
     <Compile Include="Models\Visualization.cs" />

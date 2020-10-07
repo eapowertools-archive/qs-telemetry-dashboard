@@ -4,8 +4,10 @@ using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Runtime.Serialization.Formatters.Binary;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using Newtonsoft.Json.Linq;
+using Qlik.Engine;
 using qs_telemetry_dashboard.Exceptions;
 using qs_telemetry_dashboard.Helpers;
 using qs_telemetry_dashboard.Logging;
@@ -44,12 +46,14 @@ namespace qs_telemetry_dashboard.MetadataFetch
 			IList<UnparsedSheet> unparsedSheets = GetRepositorySheets();
 			newMetadata.ParseSheets(unparsedSheets);
 
+			GetEngineObjects(newMetadata);
+
 			MetadataWriter.WriteMetadataToFile(newMetadata);
 
 			return 0;
 		}
 
-		internal static void GetRepositoryApps(TelemetryMetadata metadataObject)
+		private static void GetRepositoryApps(TelemetryMetadata metadataObject)
 		{
 			TelemetryDashboardMain.Logger.Log("Fetching all apps.", LogLevel.Info);
 			Tuple<HttpStatusCode, string> numOfApps = TelemetryDashboardMain.QRSRequest.MakeRequest("/app/count", HttpMethod.Get);
@@ -119,14 +123,14 @@ namespace qs_telemetry_dashboard.MetadataFetch
 					TelemetryDashboardMain.Logger.Log(string.Format("Processing app '{0}' with ID '{1}'", appID, appName), LogLevel.Debug);
 
 					bool published = app[3].ToObject<bool>();
-					App newApp;
+					QRSApp newApp;
 					if (!published)
 					{
-						newApp = new App(appName, app[2].ToObject<Guid>(), published);
+						newApp = new QRSApp(appName, app[2].ToObject<Guid>(), published);
 					}
 					else
 					{
-						newApp = new App(appName, app[2].ToObject<Guid>(), published, app[4].ToObject<DateTime>(), app[5].ToObject<Guid>(), app[6].ToString());
+						newApp = new QRSApp(appName, app[2].ToObject<Guid>(), published, app[4].ToObject<DateTime>(), app[5].ToObject<Guid>(), app[6].ToString());
 					}
 					metadataObject.Apps.Add(appID, newApp);
 				}
@@ -134,7 +138,7 @@ namespace qs_telemetry_dashboard.MetadataFetch
 			} while (startLocation < appCount);
 		}
 
-		internal static IList<UnparsedSheet> GetRepositorySheets()
+		private static IList<UnparsedSheet> GetRepositorySheets()
 		{
 			TelemetryDashboardMain.Logger.Log("Fetching all sheets.", LogLevel.Info);
 			Tuple<HttpStatusCode, string> numberOfSheets = TelemetryDashboardMain.QRSRequest.MakeRequest("/app/object/count?filter=objectType eq 'sheet'", HttpMethod.Get);
@@ -205,6 +209,21 @@ namespace qs_telemetry_dashboard.MetadataFetch
 			} while (startLocation < sheetCount);
 
 			return allSheets;
+		}
+
+		private static void GetEngineObjects(TelemetryMetadata metadata)
+		{
+			string wssPath = "https://" + CertificateConfigHelpers.Hostname + ":4747";
+			ILocation location = Qlik.Engine.Location.FromUri(new Uri(wssPath));
+
+			X509Certificate2Collection certificateCollection = new X509Certificate2Collection(CertificateConfigHelpers.Certificate);
+			// Defining the location as a direct connection to Qlik Sense Server
+			location.AsDirectConnection("INTERNAL", "sa_api", certificateCollection: certificateCollection);
+
+			foreach (KeyValuePair<Guid, QRSApp> appTuple in metadata.Apps)
+			{
+
+			}
 		}
 	}
 }

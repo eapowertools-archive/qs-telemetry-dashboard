@@ -91,7 +91,7 @@ namespace qs_telemetry_dashboard
 			Logger.Log("Current working directory: " + FileLocationManager.WorkingDirectory, LogLevel.Debug);
 
 			// Get certificates and set up QRS Requester
-			_qrsInstance = new QlikRepositoryRequester(CertificateHelpers.Hostname, CertificateHelpers.FetchCertificate());
+			_qrsInstance = new QlikRepositoryRequester(CertificateConfigHelpers.Hostname, CertificateConfigHelpers.Certificate);
 
 			// Main 
 

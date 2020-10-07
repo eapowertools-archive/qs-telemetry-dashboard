@@ -14,7 +14,7 @@ namespace qs_telemetry_dashboard.Models.TelemetryMetadata
 
 		internal IList<User> Users { get; set; }
 
-		internal IDictionary<Guid, App> Apps { get; set; }
+		internal IDictionary<Guid, QRSApp> Apps { get; set; }
 
 		internal TelemetryMetadata()
 		{
@@ -24,7 +24,7 @@ namespace qs_telemetry_dashboard.Models.TelemetryMetadata
 			}
 			EngineInfos = new List<EngineInfo>();
 			Users = new List<User>();
-			Apps = new Dictionary<Guid, App>();
+			Apps = new Dictionary<Guid, QRSApp>();
 		}
 
 		internal TelemetryMetadata(bool updateTime) : this()
@@ -39,7 +39,7 @@ namespace qs_telemetry_dashboard.Models.TelemetryMetadata
 		{
 			unparsedSheets.ToList().ForEach(sheet =>
 			{
-				this.Apps[sheet.AppID].Sheets.Add(sheet.ID, new Sheet(sheet.EngineObjectID, sheet.Name, sheet.OwnerID, sheet.Published, sheet.Approved));
+				this.Apps[sheet.AppID].Sheets.Add(sheet.ID, new QRSSheet(sheet.EngineObjectID, sheet.Name, sheet.OwnerID, sheet.Published, sheet.Approved));
 			});
 		}
 	}

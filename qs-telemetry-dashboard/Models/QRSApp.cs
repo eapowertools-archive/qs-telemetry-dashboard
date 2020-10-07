@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace qs_telemetry_dashboard.Models.TelemetryMetadata
 {
 	[Serializable]
-	internal class App
+	internal class QRSApp
 	{
 		internal string Name { get; set; }
 
@@ -18,20 +18,20 @@ namespace qs_telemetry_dashboard.Models.TelemetryMetadata
 
 		internal string StreamName { get; set; }
 
-		internal IDictionary<Guid, Sheet> Sheets { get; set; }
+		internal IDictionary<Guid, QRSSheet> Sheets { get; set; }
 
 		[field: NonSerializedAttribute()]
-		internal bool UpdateNeeded { get; set; }
+		internal bool VisualizationUpdateNeeded { get; set; }
 
-		internal App(string name, Guid appOwnerId, bool published)
+		internal QRSApp(string name, Guid appOwnerId, bool published)
 		{
 			this.Name = name;
 			this.AppOwnerID = appOwnerId;
 			this.Published = published;
-			this.Sheets = new Dictionary<Guid, Sheet>();
+			this.Sheets = new Dictionary<Guid, QRSSheet>();
 		}
 
-		internal App(string name, Guid appOwnerId, bool published, DateTime publishedDate, Guid streamID, string streamName) : this(name, appOwnerId, published)
+		internal QRSApp(string name, Guid appOwnerId, bool published, DateTime publishedDate, Guid streamID, string streamName) : this(name, appOwnerId, published)
 		{
 			this.PublishedDateTime = publishedDate;
 			this.StreamID = streamID;
