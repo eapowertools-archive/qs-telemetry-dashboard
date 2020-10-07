@@ -20,6 +20,9 @@ namespace qs_telemetry_dashboard.Models.TelemetryMetadata
 
 		internal IDictionary<Guid, Sheet> Sheets { get; set; }
 
+		[field: NonSerializedAttribute()]
+		internal bool UpdateNeeded { get; set; }
+
 		internal App(string name, Guid appOwnerId, bool published)
 		{
 			this.Name = name;
