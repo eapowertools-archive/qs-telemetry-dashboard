@@ -212,7 +212,7 @@ namespace qs_telemetry_dashboard
 		private static int TestCredentialRun()
 		{
 			TelemetryConfiguration configuration = new TelemetryConfiguration();
-			configuration.Hostname = "localhost";
+			configuration.Hostname = InitializeEnvironment.Hostname;
 			Logger.Log("Test Credential Mode", LogLevel.Debug);
 			QlikCredentials creds = IOHelpers.GetCredentials();
 			Logger.Log(string.Format("Credentials entered, attempting to fetch Qlik client certificate with user {0}\\{1}.", creds.UserDirectory, creds.UserName), LogLevel.Debug);

@@ -13,6 +13,7 @@ namespace qs_telemetry_dashboard.ModelWriter
 		internal static string[] HEADERS_APPS = new string[] { "AppID", "AppName", "AppOwnerID", "IsPublished", "PublishedDate", "StreamID", "StreamName" };
 		internal static string[] HEADERS_SHEETS = new string[] { "AppID", "SheetID", "SheetName", "OwnerID", "Published", "Approved" };
 		internal static string[] HEADERS_VISUALIZATIONS = new string[] { "AppID|SheetID", "VisualizationID", "Type" };
+		internal static string[] HEADERS_USERS = new string[] { "ID", "UserId", "UserDirectory", "Username" };
 
 
 
