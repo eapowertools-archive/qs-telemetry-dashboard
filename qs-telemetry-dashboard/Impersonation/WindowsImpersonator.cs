@@ -7,9 +7,9 @@ namespace qs_telemetry_dashboard.Impersonation
 {
 	internal class WindowsImpersonator : IDisposable
 	{
-		public WindowsImpersonator(string userName, string domain, SecureString password)
+		public WindowsImpersonator(string domain, string userName, SecureString password)
 		{
-			impersonateValidUser(userName, domain, password);
+			impersonateValidUser(domain, userName, password);
 		}
 
 		public void Dispose()
@@ -34,7 +34,7 @@ namespace qs_telemetry_dashboard.Impersonation
 		[DllImport("kernel32.dll", CharSet = CharSet.Auto)]
 		public static extern bool CloseHandle(IntPtr handle);
 
-		private bool impersonateValidUser(String userName, String domain, SecureString password)
+		private bool impersonateValidUser(String domain, String userName, SecureString password)
 		{
 			WindowsIdentity tempWindowsIdentity;
 			IntPtr token = IntPtr.Zero;
