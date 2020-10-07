@@ -89,9 +89,9 @@ Arguments:
 					DebugLog = true;
 				}
 
-				if (argDic.TryGetValue("-testrun", out argValue))
+				if (argDic.TryGetValue("-test", out argValue))
 				{
-					argDic.Remove("-testrun");
+					argDic.Remove("-test");
 					TestRun = true;
 					DebugLog = true;
 				}
