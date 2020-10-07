@@ -3,6 +3,7 @@ using qs_telemetry_dashboard.Models;
 using System;
 using System.Net;
 using System.Net.Http;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 
 namespace qs_telemetry_dashboard.Helpers
@@ -15,11 +16,14 @@ namespace qs_telemetry_dashboard.Helpers
 
 	internal class QlikRepositoryRequester
 	{
-		private readonly TelemetryConfiguration _configuration;
+		private readonly X509Certificate2 _certificate;
+		private readonly string _hostname;
 
-		public QlikRepositoryRequester(TelemetryConfiguration config)
+		public QlikRepositoryRequester(string hostname, X509Certificate2 certificate)
 		{
-			_configuration = config;
+			_hostname = hostname;
+			_certificate = certificate;
+
 		}
 
 		internal Tuple<HttpStatusCode, string> MakeRequest(string path, HttpMethod method, HTTPContentType contentType = HTTPContentType.json, byte[] body = null)
@@ -52,13 +56,13 @@ namespace qs_telemetry_dashboard.Helpers
 			ServicePointManager.SecurityProtocol |= SecurityProtocolType.Tls12 | SecurityProtocolType.Tls11;
 
 			HttpRequestMessage req = new HttpRequestMessage();
-			req.RequestUri = new Uri(@"https://" + _configuration.Hostname + ":4242/qrs" + path + "xrfkey=" + xrfkey);
+			req.RequestUri = new Uri(@"https://" + _hostname + ":4242/qrs" + path + "xrfkey=" + xrfkey);
 			req.Method = method;
 			req.Headers.Add("X-Qlik-xrfkey", xrfkey);
 			req.Headers.Add("X-Qlik-User", @"UserDirectory=internal;UserId=sa_api");
 
 			WebRequestHandler handler = new WebRequestHandler();
-			handler.ClientCertificates.Add(_configuration.QlikClientCertificate);
+			handler.ClientCertificates.Add(_certificate);
 
 			if (method == HttpMethod.Post || method == HttpMethod.Put)
 			{
@@ -112,21 +116,21 @@ namespace qs_telemetry_dashboard.Helpers
 			return new Tuple<HttpStatusCode, string>(responseCode, responseString);
 		}
 
-		private bool IsRepositoryRunning()
+		internal Tuple<bool, HttpStatusCode> IsRepositoryRunning()
 		{
-			TelemetryDashboardMain.Logger.Log("Checking to see if repository is running.", LogLevel.Info);
-			TelemetryDashboardMain.Logger.Log(string.Format("Sending request to 'https://{0}:4242'.", _configuration.Hostname), LogLevel.Info);
+			TelemetryDashboardMain.Logger.Log("Checking to see if repository is running.", LogLevel.Debug);
+			TelemetryDashboardMain.Logger.Log(string.Format("Sending request to 'https://{0}:4242'.", _hostname), LogLevel.Debug);
 
 			Tuple<HttpStatusCode, string> response = TelemetryDashboardMain.QRSRequest.MakeRequest("/about", HttpMethod.Get);
 			if (response.Item1 == HttpStatusCode.OK)
 			{
-				TelemetryDashboardMain.Logger.Log("Repository responded with OK.", LogLevel.Info);
-				return true;
+				TelemetryDashboardMain.Logger.Log("Repository responded with OK.", LogLevel.Debug);
+				return new Tuple<bool, HttpStatusCode>(true, response.Item1);
 			}
 			else
 			{
 				TelemetryDashboardMain.Logger.Log(string.Format("Repository responded with '{0}'. Body was: {1}", response.Item1.ToString(), response.Item2), LogLevel.Error);
-				return false;
+				return new Tuple<bool, HttpStatusCode>(false, response.Item1);
 			}
 		}
 	}

@@ -53,6 +53,10 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="BouncyCastle.Crypto, Version=1.8.6.0, Culture=neutral, PublicKeyToken=0e99375e54769942">
+      <HintPath>..\packages\BouncyCastle.1.8.6.1\lib\BouncyCastle.Crypto.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="Newtonsoft.Json, Version=12.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <HintPath>..\packages\Newtonsoft.Json.12.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
       <Private>False</Private>
@@ -67,14 +71,9 @@
     <Compile Include="Exceptions\ArgumentManagerException.cs" />
     <Compile Include="Exceptions\LoggingException.cs" />
     <Compile Include="Helpers\CertificateHelpers.cs" />
-    <Compile Include="Helpers\ConfigurationManager.cs" />
     <Compile Include="Helpers\FileLocationManager.cs" />
     <Compile Include="Initialize\InitializeEnvironment.cs" />
-    <Compile Include="Helpers\IOHelpers.cs" />
     <Compile Include="MetadataFetch\MetadataFetchRunner.cs" />
-    <Compile Include="Models\QlikCredentials.cs" />
-    <Compile Include="Models\TelemetryConfiguration.cs" />
-    <Compile Include="Impersonation\WindowsImpersonator.cs" />
     <Compile Include="Logging\TelemetryLogger.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
@@ -85,6 +84,14 @@
     <Compile Include="TelemetryDashboardMain.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Exceptions\InvalidResponseException.cs" />
+    <Compile Include="ModelWriter\MetadataWriter.cs" />
+    <Compile Include="Models\UnparsedObject\UnparsedSheet.cs" />
+    <Compile Include="Models\App.cs" />
+    <Compile Include="Models\EngineInfo.cs" />
+    <Compile Include="Models\Sheet.cs" />
+    <Compile Include="Models\TelemetryMetadata.cs" />
+    <Compile Include="Models\User.cs" />
+    <Compile Include="Models\Visualization.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
@@ -114,6 +121,15 @@
     <EmbeddedResource Include="..\packages\Newtonsoft.Json.12.0.3\lib\net45\Newtonsoft.Json.dll">
       <Link>ReferencedAssemblies\Newtonsoft.Json.dll</Link>
     </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="..\packages\BouncyCastle.1.8.6.1\lib\BouncyCastle.Crypto.dll">
+      <Link>ReferencedAssemblies\BouncyCastle.Crypto.dll</Link>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup />
+  <ItemGroup>
+    <Folder Include="Models\UnparsedObject\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

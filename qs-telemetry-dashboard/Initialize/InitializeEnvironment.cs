@@ -12,28 +12,13 @@ namespace qs_telemetry_dashboard.Initialize
 {
 	internal class InitializeEnvironment
 	{
-		private static string _hostname;
-
-		internal static string Hostname
-		{
-			get
-			{
-				if (string.IsNullOrEmpty(_hostname))
-				{
-					string hostnameBase64 = File.ReadAllText(@"C:\ProgramData\Qlik\Sense\Host.cfg");
-					byte[] data = Convert.FromBase64String(hostnameBase64);
-					_hostname = Encoding.ASCII.GetString(data);
-				}
-				return _hostname;
-			}
-		}
 		internal static int Run()
 		{
 			TelemetryDashboardMain.Logger.Log("Running in initialize mode.", LogLevel.Info);
 
 			// get location to copy exe to
 			//todo don't copy if already running in share folder
-			string telemetryPath = Path.Combine(FileLocationManager.GetTelemetrySharePath(), FileLocationManager.TELEMETRY_EXE_FILENAME);
+			string telemetryPath = Path.Combine(FileLocationManager.GetTelemetrySharePath(), FileLocationManager.TELEMETRY_EXE_FILE_NAME);
 
 			//todo fix this if condition
 			TelemetryDashboardMain.Logger.Log("Current TelemetryDashboard.exe path: " + FileLocationManager.WorkingTelemetryDashboardExePath, LogLevel.Debug);
@@ -136,7 +121,7 @@ namespace qs_telemetry_dashboard.Initialize
 			JArray listOfDataconnections = JArray.Parse(dataConnections.Item2);
 			if (listOfDataconnections.Count == 0)
 			{
-				string connectionStringPath = Path.Combine(FileLocationManager.GetTelemetrySharePath(), FileLocationManager.TELEMETRY_OUTPUT_FOLDER) + @"\";
+				string connectionStringPath = Path.Combine(FileLocationManager.GetTelemetrySharePath(), FileLocationManager.TELEMETRY_OUTPUT_FOLDER_NAME) + @"\";
 				TelemetryDashboardMain.Logger.Log("Building body for 'TelemetryMetadata' data connection. Connection string path: " + connectionStringPath, LogLevel.Debug);
 				connectionStringPath = connectionStringPath.Replace("\\", "\\\\");
 				string body = @"
@@ -156,7 +141,7 @@ namespace qs_telemetry_dashboard.Initialize
 			}
 			else
 			{
-				listOfDataconnections[0]["connectionstring"] = Path.Combine(FileLocationManager.GetTelemetrySharePath(), FileLocationManager.TELEMETRY_OUTPUT_FOLDER) + "\\";
+				listOfDataconnections[0]["connectionstring"] = Path.Combine(FileLocationManager.GetTelemetrySharePath(), FileLocationManager.TELEMETRY_OUTPUT_FOLDER_NAME) + "\\";
 				listOfDataconnections[0]["modifiedDate"] = DateTime.UtcNow.ToString("s") + "Z";
 				string appId = listOfDataconnections[0]["id"].ToString();
 				Tuple<HttpStatusCode, string> updatedConnection = TelemetryDashboardMain.QRSRequest.MakeRequest("/dataconnection/" + appId, HttpMethod.Put, HTTPContentType.json, Encoding.UTF8.GetBytes(listOfDataconnections[0].ToString()));

@@ -1,38 +1,47 @@
 ﻿using System;
-using System.Linq;
-using System.Net;
+using System.IO;
+using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
-
-using qs_telemetry_dashboard.Impersonation;
-using qs_telemetry_dashboard.Models;
+using System.Text;
+using Org.BouncyCastle.Crypto;
+using Org.BouncyCastle.Crypto.Parameters;
+using Org.BouncyCastle.OpenSsl;
+using Org.BouncyCastle.Security;
 
 namespace qs_telemetry_dashboard.Helpers
 {
 	internal class CertificateHelpers
 	{
-		internal static X509Certificate2 FetchCertificate(QlikCredentials credentials)
+		private static string _hostname;
+
+		internal static string Hostname
 		{
-			X509Certificate2 cert = null;
-			ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
-			ServicePointManager.Expect100Continue = true;
-			ServicePointManager.ServerCertificateValidationCallback = delegate { return true; };
-
-			try
+			get
 			{
-				using (WindowsImpersonator svc = new WindowsImpersonator(credentials.UserDirectory, credentials.UserName, credentials.Password))
+				if (string.IsNullOrEmpty(_hostname))
 				{
-					X509Store store = new X509Store(StoreName.My, StoreLocation.CurrentUser);
-					store.Open(OpenFlags.ReadOnly);
-					cert = store.Certificates.Cast<X509Certificate2>().FirstOrDefault(c => c.FriendlyName == "QlikClient");
-					store.Close();
+					string hostnameBase64 = File.ReadAllText(FileLocationManager.HOST_CONFIG_PATH);
+					byte[] data = Convert.FromBase64String(hostnameBase64);
+					_hostname = Encoding.ASCII.GetString(data);
 				}
+				return _hostname;
 			}
-			catch (Exception e)
-			{
-				Console.WriteLine("Error: " + e.Message);
-			}
+		}
 
-			return cert;
+		internal static X509Certificate2 FetchCertificate()
+		{
+			X509Certificate2 certificate = null;
+			byte[] certArray = File.ReadAllBytes(@"C:\ProgramData\Qlik\Sense\Repository\Exported Certificates\.Local Certificates\client.pem");
+
+			StreamReader sr = new StreamReader(@"C:\ProgramData\Qlik\Sense\Repository\Exported Certificates\.Local Certificates\client_key.pem");
+			PemReader pr = new PemReader(sr);
+			AsymmetricCipherKeyPair KeyPair = (AsymmetricCipherKeyPair)pr.ReadObject();
+			RSA rsa = DotNetUtilities.ToRSA((RsaPrivateCrtKeyParameters)KeyPair.Private);
+
+			certificate = new X509Certificate2(certArray);
+			certificate.PrivateKey = rsa;
+
+			return certificate;
 		}
 	}
 }
