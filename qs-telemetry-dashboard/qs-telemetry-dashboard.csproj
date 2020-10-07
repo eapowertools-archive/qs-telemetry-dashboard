@@ -71,13 +71,9 @@
     <Compile Include="Exceptions\ArgumentManagerException.cs" />
     <Compile Include="Exceptions\LoggingException.cs" />
     <Compile Include="Helpers\CertificateHelpers.cs" />
-    <Compile Include="Helpers\ConfigurationManager.cs" />
     <Compile Include="Helpers\FileLocationManager.cs" />
     <Compile Include="Initialize\InitializeEnvironment.cs" />
     <Compile Include="MetadataFetch\MetadataFetchRunner.cs" />
-    <Compile Include="Models\QlikCredentials.cs" />
-    <Compile Include="Models\TelemetryConfiguration.cs" />
-    <Compile Include="Impersonation\WindowsImpersonator.cs" />
     <Compile Include="Logging\TelemetryLogger.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
@@ -88,14 +84,14 @@
     <Compile Include="TelemetryDashboardMain.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Exceptions\InvalidResponseException.cs" />
-    <Compile Include="Models\TelemetryMetadata\TelemetryMetadata.cs" />
-    <Compile Include="Models\TelemetryMetadata\User.cs" />
-    <Compile Include="Models\TelemetryMetadata\App.cs" />
-    <Compile Include="Models\TelemetryMetadata\Sheet.cs" />
-    <Compile Include="Models\TelemetryMetadata\Visualization.cs" />
-    <Compile Include="Models\TelemetryMetadata\EngineInfo.cs" />
-    <Compile Include="Models\TelemetryMetadata\UnparsedObject\UnparsedSheet.cs" />
     <Compile Include="ModelWriter\MetadataWriter.cs" />
+    <Compile Include="Models\UnparsedObject\UnparsedSheet.cs" />
+    <Compile Include="Models\App.cs" />
+    <Compile Include="Models\EngineInfo.cs" />
+    <Compile Include="Models\Sheet.cs" />
+    <Compile Include="Models\TelemetryMetadata.cs" />
+    <Compile Include="Models\User.cs" />
+    <Compile Include="Models\Visualization.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
@@ -132,5 +128,8 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup />
+  <ItemGroup>
+    <Folder Include="Models\UnparsedObject\" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
