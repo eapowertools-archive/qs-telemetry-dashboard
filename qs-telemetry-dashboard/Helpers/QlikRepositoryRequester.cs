@@ -112,21 +112,21 @@ namespace qs_telemetry_dashboard.Helpers
 			return new Tuple<HttpStatusCode, string>(responseCode, responseString);
 		}
 
-		private bool IsRepositoryRunning()
+		internal Tuple<bool, HttpStatusCode> IsRepositoryRunning()
 		{
-			TelemetryDashboardMain.Logger.Log("Checking to see if repository is running.", LogLevel.Info);
-			TelemetryDashboardMain.Logger.Log(string.Format("Sending request to 'https://{0}:4242'.", _configuration.Hostname), LogLevel.Info);
+			TelemetryDashboardMain.Logger.Log("Checking to see if repository is running.", LogLevel.Debug);
+			TelemetryDashboardMain.Logger.Log(string.Format("Sending request to 'https://{0}:4242'.", _configuration.Hostname), LogLevel.Debug);
 
 			Tuple<HttpStatusCode, string> response = TelemetryDashboardMain.QRSRequest.MakeRequest("/about", HttpMethod.Get);
 			if (response.Item1 == HttpStatusCode.OK)
 			{
-				TelemetryDashboardMain.Logger.Log("Repository responded with OK.", LogLevel.Info);
-				return true;
+				TelemetryDashboardMain.Logger.Log("Repository responded with OK.", LogLevel.Debug);
+				return new Tuple<bool, HttpStatusCode>(true, response.Item1);
 			}
 			else
 			{
 				TelemetryDashboardMain.Logger.Log(string.Format("Repository responded with '{0}'. Body was: {1}", response.Item1.ToString(), response.Item2), LogLevel.Error);
-				return false;
+				return new Tuple<bool, HttpStatusCode>(false, response.Item1);
 			}
 		}
 	}

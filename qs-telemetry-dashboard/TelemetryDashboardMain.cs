@@ -130,15 +130,15 @@ namespace qs_telemetry_dashboard
 
 				_qrsInstance = new QlikRepositoryRequester(tConfig);
 
-				HttpStatusCode statusCode = TestConfiguration();
-				if (statusCode == HttpStatusCode.OK)
+				Tuple<bool, HttpStatusCode> isRunning = _qrsInstance.IsRepositoryRunning();
+				if (isRunning.Item1)
 				{
-					Logger.Log(statusCode.ToString() + " returned. Validation successful.", LogLevel.Debug);
+					Logger.Log(isRunning.Item2.ToString() + " returned. Validation successful.", LogLevel.Info);
 					return 0;
 				}
 				else
 				{
-					Logger.Log(statusCode.ToString() + " returned. Failed to get valid response from Qlik Sense Repository.", LogLevel.Error);
+					Logger.Log(isRunning.Item2.ToString() + " returned. Failed to get valid response from Qlik Sense Repository.", LogLevel.Error);
 					return 1;
 				}
 			}
@@ -225,23 +225,17 @@ namespace qs_telemetry_dashboard
 			Logger.Log("Successfully got Qlik client certificates.", LogLevel.Debug);
 			Logger.Log("Querying Qlik Sense Repository GET '\\qrs\\about'", LogLevel.Debug);
 			_qrsInstance = new QlikRepositoryRequester(configuration);
-			HttpStatusCode statusCode = TestConfiguration();
-			if (statusCode == HttpStatusCode.OK)
+			Tuple<bool, HttpStatusCode> responseIsRunning = _qrsInstance.IsRepositoryRunning();
+			if (responseIsRunning.Item1)
 			{
-				Logger.Log(statusCode.ToString() + " returned. Validation successful.", LogLevel.Debug);
+				Logger.Log(responseIsRunning.Item2.ToString() + " returned. Validation successful.", LogLevel.Debug);
 				return 0;
 			}
 			else
 			{
-				Logger.Log(statusCode.ToString() + " returned. Failed to get valid response from Qlik Sense Repository.", LogLevel.Error);
+				Logger.Log(responseIsRunning.Item2.ToString() + " returned. Failed to get valid response from Qlik Sense Repository.", LogLevel.Error);
 				return 1;
 			}
-		}
-
-		private static HttpStatusCode TestConfiguration()
-		{
-			Tuple<HttpStatusCode, string> response = TelemetryDashboardMain.QRSRequest.MakeRequest("/about", HttpMethod.Get);
-			return response.Item1;
 		}
 	}
 }

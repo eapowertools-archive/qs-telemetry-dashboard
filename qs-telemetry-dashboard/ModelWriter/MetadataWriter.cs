@@ -67,10 +67,11 @@ namespace qs_telemetry_dashboard.ModelWriter
 
 			foreach (KeyValuePair<Guid, App> app in meta.Apps)
 			{
-				sb.Append(app.Key.ToString());
-				sb.Append(CSV_SEPARATOR);
+				
 				foreach (KeyValuePair<Guid, Sheet> sheet in app.Value.Sheets)
 				{
+					sb.Append(app.Key.ToString());
+					sb.Append(CSV_SEPARATOR);
 					sb.Append(sheet.Key.ToString());
 					sb.Append(CSV_SEPARATOR);
 					sb.Append(sheet.Value.Name);
@@ -80,8 +81,8 @@ namespace qs_telemetry_dashboard.ModelWriter
 					sb.Append(sheet.Value.Published);
 					sb.Append(CSV_SEPARATOR);
 					sb.Append(sheet.Value.Approved);
+					sb.Append('\n');
 				}
-				sb.Append('\n');
 			}
 
 			WriteFile(sb, Path.Combine(FileLocationManager.GetTelemetrySharePath(), FileLocationManager.TELEMETRY_OUTPUT_FOLDER_NAME, FileLocationManager.METADATA_SHEETS_FILE_NAME));
