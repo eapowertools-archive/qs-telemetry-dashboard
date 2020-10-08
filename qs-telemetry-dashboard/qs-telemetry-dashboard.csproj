@@ -144,6 +144,18 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="..\packages\QlikSense.NetSDK.15.1.1\lib\net452\Qlik.Engine.Extensions.dll">
+      <Link>ReferencedAssemblies\Qlik.Engine.Extensions.dll</Link>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\packages\QlikSense.NetSDK.15.1.1\lib\net452\Qlik.Sense.Client.dll">
+      <Link>ReferencedAssemblies\Qlik.Sense.Client.dll</Link>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\packages\QlikSense.NetSDK.15.1.1\lib\net452\Qlik.Sense.JsonRpc.dll">
+      <Link>ReferencedAssemblies\Qlik.Sense.JsonRpc.dll</Link>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\packages\QlikSense.NetSDK.15.1.1\lib\net452\Qlik.Engine.dll">
+      <Link>ReferencedAssemblies\Qlik.Engine.dll</Link>
+    </EmbeddedResource>
     <Content Include="readme.txt" />
   </ItemGroup>
   <ItemGroup />

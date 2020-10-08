@@ -29,6 +29,7 @@ namespace qs_telemetry_dashboard.Models.TelemetryMetadata
 			this.AppOwnerID = appOwnerId;
 			this.Published = published;
 			this.Sheets = new Dictionary<Guid, QRSSheet>();
+			VisualizationUpdateNeeded = true;
 		}
 
 		internal QRSApp(string name, Guid appOwnerId, bool published, DateTime publishedDate, Guid streamID, string streamName) : this(name, appOwnerId, published)

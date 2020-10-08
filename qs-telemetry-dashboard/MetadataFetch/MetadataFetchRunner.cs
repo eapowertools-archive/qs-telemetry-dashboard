@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Runtime.Serialization.Formatters.Binary;
@@ -8,6 +9,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using Newtonsoft.Json.Linq;
 using Qlik.Engine;
+using Qlik.Sense.Client;
 using qs_telemetry_dashboard.Exceptions;
 using qs_telemetry_dashboard.Helpers;
 using qs_telemetry_dashboard.Logging;
@@ -214,7 +216,7 @@ namespace qs_telemetry_dashboard.MetadataFetch
 		private static void GetEngineObjects(TelemetryMetadata metadata)
 		{
 			string wssPath = "https://" + CertificateConfigHelpers.Hostname + ":4747";
-			ILocation location = Qlik.Engine.Location.FromUri(new Uri(wssPath));
+			ILocation location = Location.FromUri(new Uri(wssPath));
 
 			X509Certificate2Collection certificateCollection = new X509Certificate2Collection(CertificateConfigHelpers.Certificate);
 			// Defining the location as a direct connection to Qlik Sense Server
@@ -222,7 +224,23 @@ namespace qs_telemetry_dashboard.MetadataFetch
 
 			foreach (KeyValuePair<Guid, QRSApp> appTuple in metadata.Apps)
 			{
+				TelemetryDashboardMain.Logger.Log(string.Format("Getting visualaizations for app '{0}' with ID '{1}' ", appTuple.Value.Name, appTuple.Key.ToString()), LogLevel.Info);
 
+				if (appTuple.Value.VisualizationUpdateNeeded)
+				{
+					IAppIdentifier appIdentifier = new AppIdentifier() { AppId = appTuple.Key.ToString() };
+					using (IApp app = location.App(appIdentifier, null, true))
+					{
+						IEnumerable<ISheet> sheetList = app.GetSheets();
+						foreach(ISheet sheet in sheetList)
+						{
+							ISheetLayout sheetObject = (SheetLayout)sheet.GetLayout();
+							IList<Visualization> vizs = new List<Visualization>();
+							sheetObject.Cells.ToList().ForEach(c => vizs.Add(new Visualization(c.Name, c.Type)));							
+							metadata.Apps[appTuple.Key].Sheets.FirstOrDefault(s => s.Value.EngineObjectID == sheetObject.Info.Id).Value.SetSheetsList(vizs);
+						}
+					}
+				}
 			}
 		}
 	}
