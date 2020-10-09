@@ -48,6 +48,7 @@ namespace qs_telemetry_dashboard
 
 		static int Main(string[] args)
 		{
+			DateTime startTime = DateTime.UtcNow;
 			// Load dlls
 			AppDomain.CurrentDomain.AssemblyResolve += CurrentDomain_AssemblyResolve;
 
@@ -88,10 +89,11 @@ namespace qs_telemetry_dashboard
 				return 1;
 			}
 			Logger.Log("Arguments handled and logging initialized.", LogLevel.Info);
+
 			Logger.Log("Current working directory: " + FileLocationManager.WorkingDirectory, LogLevel.Debug);
 
 			// Get certificates and set up QRS Requester
-			_qrsInstance = new QlikRepositoryRequester(CertificateHelpers.Hostname, CertificateHelpers.FetchCertificate());
+			_qrsInstance = new QlikRepositoryRequester(CertificateConfigHelpers.Hostname, CertificateConfigHelpers.Certificate);
 
 			// Main 
 
@@ -136,7 +138,13 @@ namespace qs_telemetry_dashboard
 				}
 
 				// fetch metadata and wriet to csv
-				return MetadataFetchRunner.Run();
+				int returnVal = MetadataFetchRunner.Run();
+
+				DateTime endTime = DateTime.UtcNow;
+				TimeSpan totalTime = endTime - startTime;
+				Logger.Log("Fetch metadata took: " + totalTime.ToString(@"hh\:mm\:ss"), LogLevel.Info);
+
+				return returnVal;
 			}
 			else
 			{

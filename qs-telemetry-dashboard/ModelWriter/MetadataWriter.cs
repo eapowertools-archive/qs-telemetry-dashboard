@@ -15,8 +15,6 @@ namespace qs_telemetry_dashboard.ModelWriter
 		internal static string[] HEADERS_VISUALIZATIONS = new string[] { "AppID|SheetID", "VisualizationID", "Type" };
 		internal static string[] HEADERS_USERS = new string[] { "ID", "UserId", "UserDirectory", "Username" };
 
-
-
 		internal static void WriteMetadataToFile(TelemetryMetadata meta)
 		{
 			// check to see if folder exists
@@ -26,67 +24,69 @@ namespace qs_telemetry_dashboard.ModelWriter
 				Directory.CreateDirectory(outputDir);
 			}
 
-			WriteAppsMetadataFile(meta);
-			WriteSheetsMetadataFile(meta);
+			WriteAppsMetadataFiles(meta);
 		}
 
-		private static void WriteAppsMetadataFile(TelemetryMetadata meta)
+		private static void WriteAppsMetadataFiles(TelemetryMetadata meta)
 		{
-			StringBuilder sb = new StringBuilder();
+			StringBuilder appsSB = new StringBuilder();
+			StringBuilder sheetsSB = new StringBuilder();
+			StringBuilder visualizationsSB = new StringBuilder();
 
-			WriteHeaders(sb, HEADERS_APPS);
+			WriteHeaders(appsSB, HEADERS_APPS);
+			WriteHeaders(sheetsSB, HEADERS_SHEETS);
+			WriteHeaders(visualizationsSB, HEADERS_VISUALIZATIONS);
 
-			foreach (KeyValuePair<Guid, App> app in meta.Apps)
+			foreach (KeyValuePair<Guid, QRSApp> app in meta.Apps)
 			{
-				sb.Append(app.Key.ToString());
-				sb.Append(CSV_SEPARATOR);
-				sb.Append(app.Value.Name);
-				sb.Append(CSV_SEPARATOR);
-				sb.Append(app.Value.AppOwnerID.ToString());
-				sb.Append(CSV_SEPARATOR);
-				sb.Append(app.Value.Published);
+				appsSB.Append(app.Key.ToString());
+				appsSB.Append(CSV_SEPARATOR);
+				appsSB.Append(app.Value.Name);
+				appsSB.Append(CSV_SEPARATOR);
+				appsSB.Append(app.Value.AppOwnerID.ToString());
+				appsSB.Append(CSV_SEPARATOR);
+				appsSB.Append(app.Value.Published);
 				if (app.Value.Published)
 				{
-					sb.Append(CSV_SEPARATOR);
-					sb.Append(app.Value.PublishedDateTime.ToString("o"));
-					sb.Append(CSV_SEPARATOR);
-					sb.Append(app.Value.StreamID.ToString());
-					sb.Append(CSV_SEPARATOR);
-					sb.Append(app.Value.StreamName);
+					appsSB.Append(CSV_SEPARATOR);
+					appsSB.Append(app.Value.PublishedDateTime.ToString("o"));
+					appsSB.Append(CSV_SEPARATOR);
+					appsSB.Append(app.Value.StreamID.ToString());
+					appsSB.Append(CSV_SEPARATOR);
+					appsSB.Append(app.Value.StreamName);
 				}
-				sb.Append('\n');
-			}
+				appsSB.Append('\n');
 
-			WriteFile(sb, Path.Combine(FileLocationManager.GetTelemetrySharePath(), FileLocationManager.TELEMETRY_OUTPUT_FOLDER_NAME, FileLocationManager.METADATA_APPS_FILE_NAME));
-		}
-
-		private static void WriteSheetsMetadataFile(TelemetryMetadata meta)
-		{
-			StringBuilder sb = new StringBuilder();
-
-			WriteHeaders(sb, HEADERS_SHEETS);
-
-			foreach (KeyValuePair<Guid, App> app in meta.Apps)
-			{
-				
-				foreach (KeyValuePair<Guid, Sheet> sheet in app.Value.Sheets)
+				foreach (KeyValuePair<Guid, QRSSheet> sheet in app.Value.Sheets)
 				{
-					sb.Append(app.Key.ToString());
-					sb.Append(CSV_SEPARATOR);
-					sb.Append(sheet.Key.ToString());
-					sb.Append(CSV_SEPARATOR);
-					sb.Append(sheet.Value.Name);
-					sb.Append(CSV_SEPARATOR);
-					sb.Append(sheet.Value.OwnerID);
-					sb.Append(CSV_SEPARATOR);
-					sb.Append(sheet.Value.Published);
-					sb.Append(CSV_SEPARATOR);
-					sb.Append(sheet.Value.Approved);
-					sb.Append('\n');
+					sheetsSB.Append(app.Key.ToString());
+					sheetsSB.Append(CSV_SEPARATOR);
+					sheetsSB.Append(sheet.Key.ToString());
+					sheetsSB.Append(CSV_SEPARATOR);
+					sheetsSB.Append(sheet.Value.Name);
+					sheetsSB.Append(CSV_SEPARATOR);
+					sheetsSB.Append(sheet.Value.OwnerID);
+					sheetsSB.Append(CSV_SEPARATOR);
+					sheetsSB.Append(sheet.Value.Published);
+					sheetsSB.Append(CSV_SEPARATOR);
+					sheetsSB.Append(sheet.Value.Approved);
+					sheetsSB.Append('\n');
+
+					foreach(Visualization viz in sheet.Value.Visualizations)
+					{
+						visualizationsSB.Append(app.Key.ToString() + '|' + sheet.Value.EngineObjectID);
+						visualizationsSB.Append(CSV_SEPARATOR);
+						visualizationsSB.Append(viz.ObjectName);
+						visualizationsSB.Append(CSV_SEPARATOR);
+						visualizationsSB.Append(viz.ObjectType);
+						visualizationsSB.Append('\n');
+					}
 				}
 			}
 
-			WriteFile(sb, Path.Combine(FileLocationManager.GetTelemetrySharePath(), FileLocationManager.TELEMETRY_OUTPUT_FOLDER_NAME, FileLocationManager.METADATA_SHEETS_FILE_NAME));
+			WriteFile(appsSB, Path.Combine(FileLocationManager.GetTelemetrySharePath(), FileLocationManager.TELEMETRY_OUTPUT_FOLDER_NAME, FileLocationManager.METADATA_APPS_FILE_NAME));
+			WriteFile(sheetsSB, Path.Combine(FileLocationManager.GetTelemetrySharePath(), FileLocationManager.TELEMETRY_OUTPUT_FOLDER_NAME, FileLocationManager.METADATA_SHEETS_FILE_NAME));
+			WriteFile(visualizationsSB, Path.Combine(FileLocationManager.GetTelemetrySharePath(), FileLocationManager.TELEMETRY_OUTPUT_FOLDER_NAME, FileLocationManager.METADATA_VISUALIZATIONS_FILE_NAME));
 		}
 
 		private static void WriteHeaders(StringBuilder sb, string[] headers)

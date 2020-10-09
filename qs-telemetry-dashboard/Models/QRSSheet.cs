@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Net.Http.Headers;
 
 namespace qs_telemetry_dashboard.Models.TelemetryMetadata
 {
 	[Serializable]
-	internal class Sheet
+	internal class QRSSheet
 	{
 		internal string EngineObjectID { get; set; }
 
@@ -18,13 +19,20 @@ namespace qs_telemetry_dashboard.Models.TelemetryMetadata
 
 		internal IList<Visualization> Visualizations { get; set; }
 
-		internal Sheet(string engineObjectId, string name, Guid ownerId, bool published, bool approved)
+		internal QRSSheet(string engineObjectId, string name, Guid ownerId, bool published, bool approved)
 		{
 			this.EngineObjectID = engineObjectId;
 			this.Name = name;
 			this.OwnerID = ownerId;
 			this.Published = published;
 			this.Approved = approved;
+
+			Visualizations = new List<Visualization>();
+		}
+
+		internal void SetSheetsList(IList<Visualization> visualizations)
+		{
+			Visualizations = visualizations;
 		}
 	}
 }

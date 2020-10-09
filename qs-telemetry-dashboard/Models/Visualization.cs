@@ -8,8 +8,10 @@ namespace qs_telemetry_dashboard.Models.TelemetryMetadata
 
 		internal string ObjectType { get; set; }
 
-		internal Visualization()
+		internal Visualization(string objectName, string objectType)
 		{
+			ObjectName = objectName;
+			ObjectType = objectType;
 		}
 	}
 }

@@ -20,6 +20,7 @@ namespace qs_telemetry_dashboard.Helpers
 
 		internal static string METADATA_APPS_FILE_NAME = "apps.csv";
 		internal static string METADATA_SHEETS_FILE_NAME = "sheets.csv";
+		internal static string METADATA_VISUALIZATIONS_FILE_NAME = "visualizations.csv";
 
 		internal static string WorkingDirectory
 		{

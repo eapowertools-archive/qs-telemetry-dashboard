@@ -62,6 +62,22 @@
       <Private>False</Private>
       <EmbedInteropTypes>False</EmbedInteropTypes>
     </Reference>
+    <Reference Include="Qlik.Engine, Version=15.1.1.0, Culture=neutral, PublicKeyToken=1a848309662c81e5, processorArchitecture=MSIL">
+      <HintPath>..\packages\QlikSense.NetSDK.15.1.1\lib\net452\Qlik.Engine.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Qlik.Engine.Extensions, Version=15.1.1.0, Culture=neutral, PublicKeyToken=1a848309662c81e5, processorArchitecture=MSIL">
+      <HintPath>..\packages\QlikSense.NetSDK.15.1.1\lib\net452\Qlik.Engine.Extensions.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Qlik.Sense.Client, Version=15.1.1.0, Culture=neutral, PublicKeyToken=1a848309662c81e5, processorArchitecture=MSIL">
+      <HintPath>..\packages\QlikSense.NetSDK.15.1.1\lib\net452\Qlik.Sense.Client.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Qlik.Sense.JsonRpc, Version=15.1.1.0, Culture=neutral, PublicKeyToken=1a848309662c81e5, processorArchitecture=MSIL">
+      <HintPath>..\packages\QlikSense.NetSDK.15.1.1\lib\net452\Qlik.Sense.JsonRpc.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Net.Http.WebRequest" />
     <Reference Include="System.Net.Http" />
@@ -70,7 +86,7 @@
     <Compile Include="ArgumentManager.cs" />
     <Compile Include="Exceptions\ArgumentManagerException.cs" />
     <Compile Include="Exceptions\LoggingException.cs" />
-    <Compile Include="Helpers\CertificateHelpers.cs" />
+    <Compile Include="Helpers\CertificateConfigHelpers.cs" />
     <Compile Include="Helpers\FileLocationManager.cs" />
     <Compile Include="Initialize\InitializeEnvironment.cs" />
     <Compile Include="MetadataFetch\MetadataFetchRunner.cs" />
@@ -86,9 +102,9 @@
     <Compile Include="Exceptions\InvalidResponseException.cs" />
     <Compile Include="ModelWriter\MetadataWriter.cs" />
     <Compile Include="Models\UnparsedObject\UnparsedSheet.cs" />
-    <Compile Include="Models\App.cs" />
+    <Compile Include="Models\QRSApp.cs" />
     <Compile Include="Models\EngineInfo.cs" />
-    <Compile Include="Models\Sheet.cs" />
+    <Compile Include="Models\QRSSheet.cs" />
     <Compile Include="Models\TelemetryMetadata.cs" />
     <Compile Include="Models\User.cs" />
     <Compile Include="Models\Visualization.cs" />
@@ -127,9 +143,21 @@
       <Link>ReferencedAssemblies\BouncyCastle.Crypto.dll</Link>
     </EmbeddedResource>
   </ItemGroup>
-  <ItemGroup />
   <ItemGroup>
-    <Folder Include="Models\UnparsedObject\" />
+    <EmbeddedResource Include="..\packages\QlikSense.NetSDK.15.1.1\lib\net452\Qlik.Engine.Extensions.dll">
+      <Link>ReferencedAssemblies\Qlik.Engine.Extensions.dll</Link>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\packages\QlikSense.NetSDK.15.1.1\lib\net452\Qlik.Sense.Client.dll">
+      <Link>ReferencedAssemblies\Qlik.Sense.Client.dll</Link>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\packages\QlikSense.NetSDK.15.1.1\lib\net452\Qlik.Sense.JsonRpc.dll">
+      <Link>ReferencedAssemblies\Qlik.Sense.JsonRpc.dll</Link>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\packages\QlikSense.NetSDK.15.1.1\lib\net452\Qlik.Engine.dll">
+      <Link>ReferencedAssemblies\Qlik.Engine.dll</Link>
+    </EmbeddedResource>
+    <Content Include="readme.txt" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

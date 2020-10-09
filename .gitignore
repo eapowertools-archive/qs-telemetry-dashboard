@@ -348,3 +348,6 @@ MigrationBackup/
 
 # Ionide (cross platform F# VS Code tools) working folder
 .ionide/
+
+# QlikSense.Net SDK readme
+qs-telemetry-dashboard/readme.txt
