@@ -39,7 +39,7 @@ namespace qs_telemetry_dashboard.Models.TelemetryMetadata
 		{
 			unparsedSheets.ToList().ForEach(sheet =>
 			{
-				this.Apps[sheet.AppID].Sheets.Add(sheet.ID, new QRSSheet(sheet.EngineObjectID, sheet.Name, sheet.OwnerID, sheet.Published, sheet.Approved));
+				this.Apps[sheet.AppID].Sheets.Add(sheet.ID, new QRSSheet(sheet.EngineObjectID, sheet.Name, sheet.ModifiedDateTime, sheet.OwnerID, sheet.Published, sheet.Approved));
 			});
 		}
 	}

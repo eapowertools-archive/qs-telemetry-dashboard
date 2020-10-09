@@ -81,6 +81,11 @@ namespace qs_telemetry_dashboard.MetadataFetch
 						},
 						{
 							'columnType': 'Property',
+							'definition': 'modifiedDate',
+							'name': 'modifiedDate'
+						}
+						{
+							'columnType': 'Property',
 							'definition': 'owner.id',
 							'name': 'owner.id'
 						},
@@ -124,15 +129,15 @@ namespace qs_telemetry_dashboard.MetadataFetch
 					string appName = app[1].ToString();
 					TelemetryDashboardMain.Logger.Log(string.Format("Processing app '{0}' with ID '{1}'", appID, appName), LogLevel.Debug);
 
-					bool published = app[3].ToObject<bool>();
+					bool published = app[4].ToObject<bool>();
 					QRSApp newApp;
 					if (!published)
 					{
-						newApp = new QRSApp(appName, app[2].ToObject<Guid>(), published);
+						newApp = new QRSApp(appID, appName, app[2].ToObject<DateTime>(), app[3].ToObject<Guid>(), published);
 					}
 					else
 					{
-						newApp = new QRSApp(appName, app[2].ToObject<Guid>(), published, app[4].ToObject<DateTime>(), app[5].ToObject<Guid>(), app[6].ToString());
+						newApp = new QRSApp(appID, appName, app[2].ToObject<DateTime>(), app[3].ToObject<Guid>(), published, app[5].ToObject<DateTime>(), app[6].ToObject<Guid>(), app[7].ToString());
 					}
 					metadataObject.Apps.Add(appID, newApp);
 				}
@@ -176,6 +181,11 @@ namespace qs_telemetry_dashboard.MetadataFetch
 						},
 						{
 							'columnType': 'Property',
+							'definition': 'modifiedDate',
+							'name': 'modifiedDate'
+						},
+						{
+							'columnType': 'Property',
 							'definition': 'owner.id',
 							'name': 'owner.id'
 						},
@@ -205,7 +215,7 @@ namespace qs_telemetry_dashboard.MetadataFetch
 				JArray returnedSheets = JObject.Parse(sheetResponse.Item2).Value<JArray>("rows");
 				foreach (JArray sheet in returnedSheets)
 				{
-					allSheets.Add(new UnparsedSheet(sheet[0].ToObject<Guid>(), sheet[1].ToObject<Guid>(), sheet[2].ToString(), sheet[3].ToString(), sheet[4].ToObject<Guid>(), sheet[5].ToObject<bool>(), sheet[6].ToObject<bool>()));
+					allSheets.Add(new UnparsedSheet(sheet[0].ToObject<Guid>(), sheet[1].ToObject<Guid>(), sheet[2].ToString(), sheet[3].ToString(), sheet[4].ToObject<DateTime>(), sheet[5].ToObject<Guid>(), sheet[6].ToObject<bool>(), sheet[7].ToObject<bool>()));
 				}
 				startLocation += PAGESIZE;
 			} while (startLocation < sheetCount);
