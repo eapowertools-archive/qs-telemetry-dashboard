@@ -58,11 +58,28 @@ namespace qs_telemetry_dashboard.Models.TelemetryMetadata
 			{
 				return false;
 			}
-			if (this.ID == other.ID)
+			if (this.ID != other.ID)
 			{
-				if (this.ModifiedDateTime == other.ModifiedDateTime)
+				return false;
+			}
+			if (this.ModifiedDateTime != other.ModifiedDateTime)
+			{
+				return false;
+			}
+			if (this.Sheets.Count != other.Sheets.Count)
+			{
+				return false;
+			}
+			foreach(KeyValuePair<Guid, QRSSheet> sheet in this.Sheets)
+			{
+				QRSSheet comparedSheet;
+				if (!other.Sheets.TryGetValue(sheet.Key, out comparedSheet))
 				{
-					return true;
+					return false;
+				}
+				if (sheet.Value.ModifiedDateTime != comparedSheet.ModifiedDateTime)
+				{
+					return false;
 				}
 			}
 			return true;

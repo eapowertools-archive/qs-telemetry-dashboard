@@ -48,6 +48,12 @@ namespace qs_telemetry_dashboard.MetadataFetch
 			IList<UnparsedSheet> unparsedSheets = GetRepositorySheets();
 			newMetadata.ParseSheets(unparsedSheets);
 
+			//check to see engine object updates are needed
+			foreach(QRSApp app in newMetadata.Apps)
+			{
+				//tood this need to be fixed somehow, maybe add root function in Telemetry Metadata and remove ID from app object?
+			}
+
 			GetEngineObjects(newMetadata);
 
 			MetadataWriter.WriteMetadataToFile(newMetadata);
