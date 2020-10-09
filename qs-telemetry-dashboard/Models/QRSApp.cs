@@ -38,5 +38,29 @@ namespace qs_telemetry_dashboard.Models.TelemetryMetadata
 			this.StreamID = streamID;
 			this.StreamName = streamName;
 		}
+
+		public override bool Equals(object obj)
+		{
+			QRSApp other = obj as QRSApp; //avoid double casting
+			if (other is null)
+			{
+				return false;
+			}
+			return true;
+		}
+
+		public static bool operator ==(QRSApp left, QRSApp right)
+		{
+			if (left is null)
+			{
+				return right is null;
+			}
+			return left.Equals(right);
+		}
+
+		public static bool operator !=(QRSApp left, QRSApp right)
+		{
+			return !(left == right);
+		}
 	}
 }
