@@ -42,5 +42,22 @@ namespace qs_telemetry_dashboard.Models.TelemetryMetadata
 				this.Apps[sheet.AppID].Sheets.Add(sheet.ID, new QRSSheet(sheet.EngineObjectID, sheet.Name, sheet.ModifiedDateTime, sheet.OwnerID, sheet.Published, sheet.Approved));
 			});
 		}
+
+		internal void PopulateFromCachedMetadata(TelemetryMetadata oldMeta)
+		{
+			foreach(KeyValuePair<Guid, QRSApp> newApp in this.Apps)
+			{
+				QRSApp oldApp;
+				if (oldMeta.Apps.TryGetValue(newApp.Key, out oldApp))
+				{
+					if (newApp.Value == oldApp)
+					{
+						this.Apps[newApp.Key] = oldApp;
+						this.Apps[newApp.Key].VisualizationUpdateNeeded = false;
+					}
+
+				}
+			}
+		}
 	}
 }

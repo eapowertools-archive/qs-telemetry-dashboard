@@ -47,14 +47,14 @@ namespace qs_telemetry_dashboard.MetadataFetch
 			GetRepositoryApps(newMetadata);
 			IList<UnparsedSheet> unparsedSheets = GetRepositorySheets();
 			newMetadata.ParseSheets(unparsedSheets);
-
-			//check to see engine object updates are needed
-			foreach(QRSApp app in newMetadata.Apps)
-			{
-				//tood this need to be fixed somehow, maybe add root function in Telemetry Metadata and remove ID from app object?
-			}
+			newMetadata.PopulateFromCachedMetadata(oldMeta);
 
 			GetEngineObjects(newMetadata);
+
+			Stream SaveFileStream = File.Create(telemetryMetadataFile);
+			BinaryFormatter serializer = new BinaryFormatter();
+			serializer.Serialize(SaveFileStream, newMetadata);
+			SaveFileStream.Close();
 
 			MetadataWriter.WriteMetadataToFile(newMetadata);
 
@@ -89,7 +89,7 @@ namespace qs_telemetry_dashboard.MetadataFetch
 							'columnType': 'Property',
 							'definition': 'modifiedDate',
 							'name': 'modifiedDate'
-						}
+						},
 						{
 							'columnType': 'Property',
 							'definition': 'owner.id',
@@ -139,11 +139,11 @@ namespace qs_telemetry_dashboard.MetadataFetch
 					QRSApp newApp;
 					if (!published)
 					{
-						newApp = new QRSApp(appID, appName, app[2].ToObject<DateTime>(), app[3].ToObject<Guid>(), published);
+						newApp = new QRSApp(appName, app[2].ToObject<DateTime>(), app[3].ToObject<Guid>(), published);
 					}
 					else
 					{
-						newApp = new QRSApp(appID, appName, app[2].ToObject<DateTime>(), app[3].ToObject<Guid>(), published, app[5].ToObject<DateTime>(), app[6].ToObject<Guid>(), app[7].ToString());
+						newApp = new QRSApp(appName, app[2].ToObject<DateTime>(), app[3].ToObject<Guid>(), published, app[5].ToObject<DateTime>(), app[6].ToObject<Guid>(), app[7].ToString());
 					}
 					metadataObject.Apps.Add(appID, newApp);
 				}
@@ -240,10 +240,11 @@ namespace qs_telemetry_dashboard.MetadataFetch
 
 			foreach (KeyValuePair<Guid, QRSApp> appTuple in metadata.Apps)
 			{
-				TelemetryDashboardMain.Logger.Log(string.Format("Getting visualaizations for app '{0}' with ID '{1}' ", appTuple.Value.Name, appTuple.Key.ToString()), LogLevel.Info);
+				TelemetryDashboardMain.Logger.Log(string.Format("Checking to see if visualaizations fetch is needed for app '{0}' with ID '{1}' ", appTuple.Value.Name, appTuple.Key.ToString()), LogLevel.Debug);
 
 				if (appTuple.Value.VisualizationUpdateNeeded)
 				{
+					TelemetryDashboardMain.Logger.Log(string.Format("Getting visualaizations for app '{0}' with ID '{1}' ", appTuple.Value.Name, appTuple.Key.ToString()), LogLevel.Info);
 					IAppIdentifier appIdentifier = new AppIdentifier() { AppId = appTuple.Key.ToString() };
 					using (IApp app = location.App(appIdentifier, null, true))
 					{

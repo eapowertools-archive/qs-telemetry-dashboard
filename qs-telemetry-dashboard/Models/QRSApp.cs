@@ -6,8 +6,6 @@ namespace qs_telemetry_dashboard.Models.TelemetryMetadata
 	[Serializable]
 	internal class QRSApp
 	{
-		internal Guid ID { get; set; }
-
 		internal string Name { get; set; }
 
 		internal DateTime ModifiedDateTime { get; set; }
@@ -27,9 +25,8 @@ namespace qs_telemetry_dashboard.Models.TelemetryMetadata
 		[field: NonSerializedAttribute()]
 		internal bool VisualizationUpdateNeeded { get; set; }
 
-		internal QRSApp(Guid id, string name, DateTime modifiedDateTime, Guid appOwnerId, bool published)
+		internal QRSApp(string name, DateTime modifiedDateTime, Guid appOwnerId, bool published)
 		{
-			this.ID = id;
 			this.Name = name;
 			this.ModifiedDateTime = modifiedDateTime;
 			this.AppOwnerID = appOwnerId;
@@ -38,7 +35,7 @@ namespace qs_telemetry_dashboard.Models.TelemetryMetadata
 			VisualizationUpdateNeeded = true;
 		}
 
-		internal QRSApp(Guid id, string name, DateTime modifiedDateTime, Guid appOwnerId, bool published, DateTime publishedDate, Guid streamID, string streamName) : this(id, name, modifiedDateTime, appOwnerId, published)
+		internal QRSApp(string name, DateTime modifiedDateTime, Guid appOwnerId, bool published, DateTime publishedDate, Guid streamID, string streamName) : this(name, modifiedDateTime, appOwnerId, published)
 		{
 			this.PublishedDateTime = publishedDate;
 			this.StreamID = streamID;
@@ -47,7 +44,7 @@ namespace qs_telemetry_dashboard.Models.TelemetryMetadata
 
 		public override int GetHashCode()
 		{
-			char[] c = this.ID.ToString().ToCharArray();
+			char[] c = this.ModifiedDateTime.ToString("o").ToCharArray();
 			return (int)c[0];
 		}
 
@@ -55,10 +52,6 @@ namespace qs_telemetry_dashboard.Models.TelemetryMetadata
 		{
 			QRSApp other = obj as QRSApp; //avoid double casting
 			if (other is null)
-			{
-				return false;
-			}
-			if (this.ID != other.ID)
 			{
 				return false;
 			}
