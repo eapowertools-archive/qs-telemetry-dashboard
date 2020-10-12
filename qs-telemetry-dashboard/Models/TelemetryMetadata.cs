@@ -50,17 +50,18 @@ namespace qs_telemetry_dashboard.Models.TelemetryMetadata
 				return;
 			}
 
-			foreach(KeyValuePair<Guid, QRSApp> newApp in this.Apps)
+			IList<Guid> newAppKeys = this.Apps.Keys.ToList();
+
+			foreach(Guid key in newAppKeys)
 			{
 				QRSApp oldApp;
-				if (oldMeta.Apps.TryGetValue(newApp.Key, out oldApp))
+				if (oldMeta.Apps.TryGetValue(key, out oldApp))
 				{
-					if (newApp.Value == oldApp)
+					if (this.Apps[key] == oldApp)
 					{
-						this.Apps[newApp.Key] = oldApp;
-						this.Apps[newApp.Key].VisualizationUpdateNeeded = false;
+						oldApp.VisualizationUpdateNeeded = false;
+						this.Apps[key] = oldApp;
 					}
-
 				}
 			}
 		}
