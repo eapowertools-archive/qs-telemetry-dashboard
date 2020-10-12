@@ -8,6 +8,8 @@ namespace qs_telemetry_dashboard.Models.TelemetryMetadata
 	{
 		internal string Name { get; set; }
 
+		internal DateTime ModifiedDateTime { get; set; }
+
 		internal Guid AppOwnerID { get; set; }
 
 		internal bool Published { get; set; }
@@ -23,20 +25,27 @@ namespace qs_telemetry_dashboard.Models.TelemetryMetadata
 		[field: NonSerializedAttribute()]
 		internal bool VisualizationUpdateNeeded { get; set; }
 
-		internal QRSApp(string name, Guid appOwnerId, bool published)
+		internal QRSApp(string name, DateTime modifiedDateTime, Guid appOwnerId, bool published)
 		{
 			this.Name = name;
+			this.ModifiedDateTime = modifiedDateTime;
 			this.AppOwnerID = appOwnerId;
 			this.Published = published;
 			this.Sheets = new Dictionary<Guid, QRSSheet>();
 			VisualizationUpdateNeeded = true;
 		}
 
-		internal QRSApp(string name, Guid appOwnerId, bool published, DateTime publishedDate, Guid streamID, string streamName) : this(name, appOwnerId, published)
+		internal QRSApp(string name, DateTime modifiedDateTime, Guid appOwnerId, bool published, DateTime publishedDate, Guid streamID, string streamName) : this(name, modifiedDateTime, appOwnerId, published)
 		{
 			this.PublishedDateTime = publishedDate;
 			this.StreamID = streamID;
 			this.StreamName = streamName;
+		}
+
+		public override int GetHashCode()
+		{
+			char[] c = this.ModifiedDateTime.ToString("o").ToCharArray();
+			return (int)c[0];
 		}
 
 		public override bool Equals(object obj)
@@ -45,6 +54,26 @@ namespace qs_telemetry_dashboard.Models.TelemetryMetadata
 			if (other is null)
 			{
 				return false;
+			}
+			if (this.ModifiedDateTime != other.ModifiedDateTime)
+			{
+				return false;
+			}
+			if (this.Sheets.Count != other.Sheets.Count)
+			{
+				return false;
+			}
+			foreach(KeyValuePair<Guid, QRSSheet> sheet in this.Sheets)
+			{
+				QRSSheet comparedSheet;
+				if (!other.Sheets.TryGetValue(sheet.Key, out comparedSheet))
+				{
+					return false;
+				}
+				if (sheet.Value.ModifiedDateTime != comparedSheet.ModifiedDateTime)
+				{
+					return false;
+				}
 			}
 			return true;
 		}

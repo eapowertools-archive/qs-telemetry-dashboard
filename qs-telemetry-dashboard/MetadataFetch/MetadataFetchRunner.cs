@@ -47,8 +47,14 @@ namespace qs_telemetry_dashboard.MetadataFetch
 			GetRepositoryApps(newMetadata);
 			IList<UnparsedSheet> unparsedSheets = GetRepositorySheets();
 			newMetadata.ParseSheets(unparsedSheets);
+			newMetadata.PopulateFromCachedMetadata(oldMeta);
 
 			GetEngineObjects(newMetadata);
+
+			Stream SaveFileStream = File.Create(telemetryMetadataFile);
+			BinaryFormatter serializer = new BinaryFormatter();
+			serializer.Serialize(SaveFileStream, newMetadata);
+			SaveFileStream.Close();
 
 			MetadataWriter.WriteMetadataToFile(newMetadata);
 
@@ -78,6 +84,11 @@ namespace qs_telemetry_dashboard.MetadataFetch
 							'columnType': 'Property',
 							'definition': 'name',
 							'name': 'name'
+						},
+						{
+							'columnType': 'Property',
+							'definition': 'modifiedDate',
+							'name': 'modifiedDate'
 						},
 						{
 							'columnType': 'Property',
@@ -124,15 +135,15 @@ namespace qs_telemetry_dashboard.MetadataFetch
 					string appName = app[1].ToString();
 					TelemetryDashboardMain.Logger.Log(string.Format("Processing app '{0}' with ID '{1}'", appID, appName), LogLevel.Debug);
 
-					bool published = app[3].ToObject<bool>();
+					bool published = app[4].ToObject<bool>();
 					QRSApp newApp;
 					if (!published)
 					{
-						newApp = new QRSApp(appName, app[2].ToObject<Guid>(), published);
+						newApp = new QRSApp(appName, app[2].ToObject<DateTime>(), app[3].ToObject<Guid>(), published);
 					}
 					else
 					{
-						newApp = new QRSApp(appName, app[2].ToObject<Guid>(), published, app[4].ToObject<DateTime>(), app[5].ToObject<Guid>(), app[6].ToString());
+						newApp = new QRSApp(appName, app[2].ToObject<DateTime>(), app[3].ToObject<Guid>(), published, app[5].ToObject<DateTime>(), app[6].ToObject<Guid>(), app[7].ToString());
 					}
 					metadataObject.Apps.Add(appID, newApp);
 				}
@@ -176,6 +187,11 @@ namespace qs_telemetry_dashboard.MetadataFetch
 						},
 						{
 							'columnType': 'Property',
+							'definition': 'modifiedDate',
+							'name': 'modifiedDate'
+						},
+						{
+							'columnType': 'Property',
 							'definition': 'owner.id',
 							'name': 'owner.id'
 						},
@@ -205,7 +221,7 @@ namespace qs_telemetry_dashboard.MetadataFetch
 				JArray returnedSheets = JObject.Parse(sheetResponse.Item2).Value<JArray>("rows");
 				foreach (JArray sheet in returnedSheets)
 				{
-					allSheets.Add(new UnparsedSheet(sheet[0].ToObject<Guid>(), sheet[1].ToObject<Guid>(), sheet[2].ToString(), sheet[3].ToString(), sheet[4].ToObject<Guid>(), sheet[5].ToObject<bool>(), sheet[6].ToObject<bool>()));
+					allSheets.Add(new UnparsedSheet(sheet[0].ToObject<Guid>(), sheet[1].ToObject<Guid>(), sheet[2].ToString(), sheet[3].ToString(), sheet[4].ToObject<DateTime>(), sheet[5].ToObject<Guid>(), sheet[6].ToObject<bool>(), sheet[7].ToObject<bool>()));
 				}
 				startLocation += PAGESIZE;
 			} while (startLocation < sheetCount);
@@ -224,10 +240,11 @@ namespace qs_telemetry_dashboard.MetadataFetch
 
 			foreach (KeyValuePair<Guid, QRSApp> appTuple in metadata.Apps)
 			{
-				TelemetryDashboardMain.Logger.Log(string.Format("Getting visualaizations for app '{0}' with ID '{1}' ", appTuple.Value.Name, appTuple.Key.ToString()), LogLevel.Info);
+				TelemetryDashboardMain.Logger.Log(string.Format("Checking to see if visualaizations fetch is needed for app '{0}' with ID '{1}' ", appTuple.Value.Name, appTuple.Key.ToString()), LogLevel.Debug);
 
 				if (appTuple.Value.VisualizationUpdateNeeded)
 				{
+					TelemetryDashboardMain.Logger.Log(string.Format("Getting visualaizations for app '{0}' with ID '{1}' ", appTuple.Value.Name, appTuple.Key.ToString()), LogLevel.Info);
 					IAppIdentifier appIdentifier = new AppIdentifier() { AppId = appTuple.Key.ToString() };
 					using (IApp app = location.App(appIdentifier, null, true))
 					{
