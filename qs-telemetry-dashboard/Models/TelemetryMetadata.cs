@@ -45,6 +45,11 @@ namespace qs_telemetry_dashboard.Models.TelemetryMetadata
 
 		internal void PopulateFromCachedMetadata(TelemetryMetadata oldMeta)
 		{
+			if (oldMeta.Apps.Count == 0)
+			{
+				return;
+			}
+
 			foreach(KeyValuePair<Guid, QRSApp> newApp in this.Apps)
 			{
 				QRSApp oldApp;
