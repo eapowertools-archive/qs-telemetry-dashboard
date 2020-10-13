@@ -44,6 +44,7 @@ namespace qs_telemetry_dashboard.MetadataFetch
 
 			newMetadata = new TelemetryMetadata(true);
 
+			GetRepositoryEngineInfos(newMetadata);
 			GetRepositoryUsers(newMetadata);
 			GetRepositoryApps(newMetadata);
 			IList<UnparsedSheet> unparsedSheets = GetRepositorySheets();
@@ -60,6 +61,71 @@ namespace qs_telemetry_dashboard.MetadataFetch
 			MetadataWriter.WriteMetadataToFile(newMetadata);
 
 			return 0;
+		}
+
+		private static void GetRepositoryEngineInfos(TelemetryMetadata metadataObject)
+		{
+			TelemetryDashboardMain.Logger.Log("Fetching all engine information.", LogLevel.Info);
+			Tuple<HttpStatusCode, string> numOfEngines = TelemetryDashboardMain.QRSRequest.MakeRequest("/engineservice/count", HttpMethod.Get);
+			if (numOfEngines.Item1 != HttpStatusCode.OK)
+			{
+				throw new InvalidResponseException(numOfEngines.Item1.ToString() + " returned when trying to get a count of all the engines. Request failed.");
+			}
+			int appCount = JObject.Parse(numOfEngines.Item2)["value"].ToObject<int>();
+
+
+			string appBody = @"
+				{
+					'columns':
+						[{
+							'columnType': 'Property',
+							'definition': 'servernodeconfiguration.hostname',
+							'name': 'servernodeconfiguration.hostname'
+						},
+						{
+							'columnType': 'Property',
+							'definition': 'settings.workingSetSizeLoPct',
+							'name': 'settings.workingSetSizeLoPct'
+						},
+						{
+							'columnType': 'Property',
+							'definition': 'settings.workingSetSizeHiPct',
+							'name': 'settings.workingSetSizeHiPct'
+						},
+						{
+							'columnType': 'Property',
+							'definition': 'settings.performanceLogVerbosity',
+							'name': 'settings.performanceLogVerbosity'
+						},
+						{
+							'columnType': 'Property',
+							'definition': 'settings.qixPerformanceLogVerbosity',
+							'name': 'settings.qixPerformanceLogVerbosity'
+						},
+						{
+							'columnType': 'Property',
+							'definition': 'settings.sessionLogVerbosity',
+							'name': 'settings.sessionLogVerbosity'
+						}],
+						'entity': 'EngineService'
+				}";
+
+			int startLocation = 0;
+			Tuple<HttpStatusCode, string> engineResponse;
+			do
+			{
+				engineResponse = TelemetryDashboardMain.QRSRequest.MakeRequest("/engineservice/table?skip=" + startLocation + "&take=" + PAGESIZE, HttpMethod.Post, HTTPContentType.json, Encoding.UTF8.GetBytes(appBody));
+				if (engineResponse.Item1 != HttpStatusCode.Created)
+				{
+					throw new InvalidResponseException(engineResponse.Item1.ToString() + " returned when trying to get apps. Request failed.");
+				}
+				JArray returnedEngines = JObject.Parse(engineResponse.Item2).Value<JArray>("rows");
+				foreach (JArray engine in returnedEngines)
+				{
+					metadataObject.EngineInfos.Add(new EngineInfo(engine[0].ToString(), engine[1].ToObject<int>(), engine[2].ToObject<int>(), (EngineLogLevel)engine[3].ToObject<int>(), (EngineLogLevel)engine[4].ToObject<int>(), (EngineLogLevel)engine[5].ToObject<int>()));
+				}
+				startLocation += PAGESIZE;
+			} while (startLocation < appCount);
 		}
 
 		private static void GetRepositoryUsers(TelemetryMetadata metadataObject)

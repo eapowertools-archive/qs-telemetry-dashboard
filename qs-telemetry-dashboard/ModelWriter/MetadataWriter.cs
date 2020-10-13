@@ -27,6 +27,28 @@ namespace qs_telemetry_dashboard.ModelWriter
 			WriteAppsMetadataFiles(meta);
 		}
 
+		private static void WriteUsersMetadataFiles(TelemetryMetadata meta)
+		{
+			StringBuilder sb = new StringBuilder();
+
+			WriteHeaders(sb, HEADERS_USERS);
+
+			foreach (User user in meta.Users)
+			{
+				sb.Append(user.ID.ToString());
+				sb.Append(CSV_SEPARATOR);
+				sb.Append(user.UserID);
+				sb.Append(CSV_SEPARATOR);
+				sb.Append(user.UserDirectory);
+				sb.Append(CSV_SEPARATOR);
+				sb.Append(user.Username);
+				sb.Append('\n');
+			}
+
+			WriteFile(sb, Path.Combine(FileLocationManager.GetTelemetrySharePath(), FileLocationManager.TELEMETRY_OUTPUT_FOLDER_NAME, FileLocationManager.METADATA_USERS_FILE_NAME));
+
+		}
+
 		private static void WriteAppsMetadataFiles(TelemetryMetadata meta)
 		{
 			StringBuilder appsSB = new StringBuilder();
