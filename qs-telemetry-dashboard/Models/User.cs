@@ -12,8 +12,12 @@ namespace qs_telemetry_dashboard.Models.TelemetryMetadata
 
 		internal string Username { get; set; }
 
-		internal User()
+		internal User(Guid id, string userId, string userDirectory, string username)
 		{
+			this.ID = id;
+			this.UserID = userId;
+			this.UserDirectory = userDirectory;
+			this.Username = username;
 		}
 	}
 }

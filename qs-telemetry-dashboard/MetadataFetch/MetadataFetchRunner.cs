@@ -44,6 +44,7 @@ namespace qs_telemetry_dashboard.MetadataFetch
 
 			newMetadata = new TelemetryMetadata(true);
 
+			GetRepositoryUsers(newMetadata);
 			GetRepositoryApps(newMetadata);
 			IList<UnparsedSheet> unparsedSheets = GetRepositorySheets();
 			newMetadata.ParseSheets(unparsedSheets);
@@ -59,6 +60,61 @@ namespace qs_telemetry_dashboard.MetadataFetch
 			MetadataWriter.WriteMetadataToFile(newMetadata);
 
 			return 0;
+		}
+
+		private static void GetRepositoryUsers(TelemetryMetadata metadataObject)
+		{
+			TelemetryDashboardMain.Logger.Log("Fetching all users.", LogLevel.Info);
+			Tuple<HttpStatusCode, string> numOfUsers = TelemetryDashboardMain.QRSRequest.MakeRequest("/user/count", HttpMethod.Get);
+			if (numOfUsers.Item1 != HttpStatusCode.OK)
+			{
+				throw new InvalidResponseException(numOfUsers.Item1.ToString() + " returned when trying to get a count of all the users. Request failed.");
+			}
+			int appCount = JObject.Parse(numOfUsers.Item2)["value"].ToObject<int>();
+
+
+			string appBody = @"
+				{
+					'columns':
+						[{
+							'columnType': 'Property',
+							'definition': 'id',
+							'name': 'id'
+						},
+						{
+							'columnType': 'Property',
+							'definition': 'userid',
+							'name': 'userid'
+						},
+						{
+							'columnType': 'Property',
+							'definition': 'userdirectory',
+							'name': 'userdirectory'
+						},
+						{
+							'columnType': 'Property',
+							'definition': 'name',
+							'name': 'name'
+						}],
+						'entity': 'User'
+				}";
+
+			int startLocation = 0;
+			Tuple<HttpStatusCode, string> userResponse;
+			do
+			{
+				userResponse = TelemetryDashboardMain.QRSRequest.MakeRequest("/user/table?skip=" + startLocation + "&take=" + PAGESIZE, HttpMethod.Post, HTTPContentType.json, Encoding.UTF8.GetBytes(appBody));
+				if (userResponse.Item1 != HttpStatusCode.Created)
+				{
+					throw new InvalidResponseException(userResponse.Item1.ToString() + " returned when trying to get apps. Request failed.");
+				}
+				JArray returnedUsers = JObject.Parse(userResponse.Item2).Value<JArray>("rows");
+				foreach (JArray user in returnedUsers)
+				{
+					metadataObject.Users.Add(new User(user[0].ToObject<Guid>(), user[1].ToString(), user[2].ToString(), user[3].ToString()));
+				}
+				startLocation += PAGESIZE;
+			} while (startLocation < appCount);
 		}
 
 		private static void GetRepositoryApps(TelemetryMetadata metadataObject)
