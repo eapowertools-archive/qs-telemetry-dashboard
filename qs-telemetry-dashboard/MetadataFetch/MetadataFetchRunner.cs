@@ -13,8 +13,8 @@ using Qlik.Sense.Client;
 using qs_telemetry_dashboard.Exceptions;
 using qs_telemetry_dashboard.Helpers;
 using qs_telemetry_dashboard.Logging;
-using qs_telemetry_dashboard.Models.TelemetryMetadata;
-using qs_telemetry_dashboard.Models.TelemetryMetadata.UnparsedObject;
+using qs_telemetry_dashboard.Models;
+using qs_telemetry_dashboard.Models.UnparsedObject;
 using qs_telemetry_dashboard.ModelWriter;
 
 namespace qs_telemetry_dashboard.MetadataFetch
@@ -44,6 +44,7 @@ namespace qs_telemetry_dashboard.MetadataFetch
 
 			newMetadata = new TelemetryMetadata(true);
 
+			GetRepositoryExtensionSchemas(newMetadata);
 			GetRepositoryEngineInfos(newMetadata);
 			GetRepositoryUsers(newMetadata);
 			GetRepositoryApps(newMetadata);
@@ -63,18 +64,29 @@ namespace qs_telemetry_dashboard.MetadataFetch
 			return 0;
 		}
 
+		private static void GetRepositoryExtensionSchemas(TelemetryMetadata metadataObject)
+		{
+			TelemetryDashboardMain.Logger.Log("Fetching all extension schemas.", LogLevel.Info);
+			Tuple<HttpStatusCode, string> extensionSchemas = TelemetryDashboardMain.QRSRequest.MakeRequest("/extension/schema", HttpMethod.Get);
+			if (extensionSchemas.Item1 != HttpStatusCode.OK)
+			{
+				throw new InvalidResponseException(extensionSchemas.Item1.ToString() + " returned when trying to get all extension schemas. Request failed.");
+			}
+			JObject parsedExtensionSchemas = JObject.Parse(extensionSchemas.Item2);
+
+			foreach (JProperty schema in parsedExtensionSchemas.Children())
+			{
+				string type = schema.Value["type"].ToString();
+				if (type == "visualization")
+				{
+					metadataObject.ExtensionSchemas.Add(new ExtensionSchema(schema.Name, schema.Value["name"].ToString(), type));
+				}
+			}
+		}
+
 		private static void GetRepositoryEngineInfos(TelemetryMetadata metadataObject)
 		{
-			TelemetryDashboardMain.Logger.Log("Fetching all engine information.", LogLevel.Info);
-			Tuple<HttpStatusCode, string> numOfEngines = TelemetryDashboardMain.QRSRequest.MakeRequest("/engineservice/count", HttpMethod.Get);
-			if (numOfEngines.Item1 != HttpStatusCode.OK)
-			{
-				throw new InvalidResponseException(numOfEngines.Item1.ToString() + " returned when trying to get a count of all the engines. Request failed.");
-			}
-			int appCount = JObject.Parse(numOfEngines.Item2)["value"].ToObject<int>();
-
-
-			string appBody = @"
+			string engineBody = @"
 				{
 					'columns':
 						[{
@@ -110,36 +122,17 @@ namespace qs_telemetry_dashboard.MetadataFetch
 						'entity': 'EngineService'
 				}";
 
-			int startLocation = 0;
-			Tuple<HttpStatusCode, string> engineResponse;
-			do
-			{
-				engineResponse = TelemetryDashboardMain.QRSRequest.MakeRequest("/engineservice/table?skip=" + startLocation + "&take=" + PAGESIZE, HttpMethod.Post, HTTPContentType.json, Encoding.UTF8.GetBytes(appBody));
-				if (engineResponse.Item1 != HttpStatusCode.Created)
-				{
-					throw new InvalidResponseException(engineResponse.Item1.ToString() + " returned when trying to get apps. Request failed.");
-				}
-				JArray returnedEngines = JObject.Parse(engineResponse.Item2).Value<JArray>("rows");
-				foreach (JArray engine in returnedEngines)
-				{
-					metadataObject.EngineInfos.Add(new EngineInfo(engine[0].ToString(), engine[1].ToObject<int>(), engine[2].ToObject<int>(), (EngineLogLevel)engine[3].ToObject<int>(), (EngineLogLevel)engine[4].ToObject<int>(), (EngineLogLevel)engine[5].ToObject<int>()));
-				}
-				startLocation += PAGESIZE;
-			} while (startLocation < appCount);
+
+			Action<JArray> addAction = (engine) => metadataObject.EngineInfos.Add(new EngineInfo(engine[0].ToString(), engine[1].ToObject<int>(), engine[2].ToObject<int>(), (EngineLogLevel)engine[3].ToObject<int>(), (EngineLogLevel)engine[4].ToObject<int>(), (EngineLogLevel)engine[5].ToObject<int>()));
+
+			GetRepositoryPagedObjects("engineservice", engineBody, addAction);
 		}
+
+
 
 		private static void GetRepositoryUsers(TelemetryMetadata metadataObject)
 		{
-			TelemetryDashboardMain.Logger.Log("Fetching all users.", LogLevel.Info);
-			Tuple<HttpStatusCode, string> numOfUsers = TelemetryDashboardMain.QRSRequest.MakeRequest("/user/count", HttpMethod.Get);
-			if (numOfUsers.Item1 != HttpStatusCode.OK)
-			{
-				throw new InvalidResponseException(numOfUsers.Item1.ToString() + " returned when trying to get a count of all the users. Request failed.");
-			}
-			int appCount = JObject.Parse(numOfUsers.Item2)["value"].ToObject<int>();
-
-
-			string appBody = @"
+			string userBody = @"
 				{
 					'columns':
 						[{
@@ -165,35 +158,13 @@ namespace qs_telemetry_dashboard.MetadataFetch
 						'entity': 'User'
 				}";
 
-			int startLocation = 0;
-			Tuple<HttpStatusCode, string> userResponse;
-			do
-			{
-				userResponse = TelemetryDashboardMain.QRSRequest.MakeRequest("/user/table?skip=" + startLocation + "&take=" + PAGESIZE, HttpMethod.Post, HTTPContentType.json, Encoding.UTF8.GetBytes(appBody));
-				if (userResponse.Item1 != HttpStatusCode.Created)
-				{
-					throw new InvalidResponseException(userResponse.Item1.ToString() + " returned when trying to get apps. Request failed.");
-				}
-				JArray returnedUsers = JObject.Parse(userResponse.Item2).Value<JArray>("rows");
-				foreach (JArray user in returnedUsers)
-				{
-					metadataObject.Users.Add(new User(user[0].ToObject<Guid>(), user[1].ToString(), user[2].ToString(), user[3].ToString()));
-				}
-				startLocation += PAGESIZE;
-			} while (startLocation < appCount);
+			Action<JArray> addAction = (user) => metadataObject.Users.Add(new User(user[0].ToObject<Guid>(), user[1].ToString(), user[2].ToString(), user[3].ToString()));
+
+			GetRepositoryPagedObjects("user", userBody, addAction);
 		}
 
 		private static void GetRepositoryApps(TelemetryMetadata metadataObject)
 		{
-			TelemetryDashboardMain.Logger.Log("Fetching all apps.", LogLevel.Info);
-			Tuple<HttpStatusCode, string> numOfApps = TelemetryDashboardMain.QRSRequest.MakeRequest("/app/count", HttpMethod.Get);
-			if (numOfApps.Item1 != HttpStatusCode.OK)
-			{
-				throw new InvalidResponseException(numOfApps.Item1.ToString() + " returned when trying to get a count of all the apps. Request failed.");
-			}
-			int appCount = JObject.Parse(numOfApps.Item2)["value"].ToObject<int>();
-
-
 			string appBody = @"
 				{
 					'columns':
@@ -222,7 +193,7 @@ namespace qs_telemetry_dashboard.MetadataFetch
 							'definition': 'published',
 							'name': 'published'
 						},
-{
+						{
 							'columnType': 'Property',
 							'definition': 'publishtime',
 							'name': 'publishtime'
@@ -241,36 +212,26 @@ namespace qs_telemetry_dashboard.MetadataFetch
 						'entity': 'App'
 				}";
 
-			int startLocation = 0;
-			Tuple<HttpStatusCode, string> appResponse;
-			do
+			Action<JArray> addAction = (app) =>
 			{
-				appResponse = TelemetryDashboardMain.QRSRequest.MakeRequest("/app/table?skip=" + startLocation + "&take=" + PAGESIZE, HttpMethod.Post, HTTPContentType.json, Encoding.UTF8.GetBytes(appBody));
-				if (appResponse.Item1 != HttpStatusCode.Created)
-				{
-					throw new InvalidResponseException(appResponse.Item1.ToString() + " returned when trying to get apps. Request failed.");
-				}
-				JArray returnedApps = JObject.Parse(appResponse.Item2).Value<JArray>("rows");
-				foreach (JArray app in returnedApps)
-				{
-					Guid appID = app[0].ToObject<Guid>();
-					string appName = app[1].ToString();
-					TelemetryDashboardMain.Logger.Log(string.Format("Processing app '{0}' with ID '{1}'", appID, appName), LogLevel.Debug);
+				Guid appID = app[0].ToObject<Guid>();
+				string appName = app[1].ToString();
+				TelemetryDashboardMain.Logger.Log(string.Format("Processing app '{0}' with ID '{1}'", appID, appName), LogLevel.Debug);
 
-					bool published = app[4].ToObject<bool>();
-					QRSApp newApp;
-					if (!published)
-					{
-						newApp = new QRSApp(appName, app[2].ToObject<DateTime>(), app[3].ToObject<Guid>(), published);
-					}
-					else
-					{
-						newApp = new QRSApp(appName, app[2].ToObject<DateTime>(), app[3].ToObject<Guid>(), published, app[5].ToObject<DateTime>(), app[6].ToObject<Guid>(), app[7].ToString());
-					}
-					metadataObject.Apps.Add(appID, newApp);
+				bool published = app[4].ToObject<bool>();
+				QRSApp newApp;
+				if (!published)
+				{
+					newApp = new QRSApp(appName, app[2].ToObject<DateTime>(), app[3].ToObject<Guid>(), published);
 				}
-				startLocation += PAGESIZE;
-			} while (startLocation < appCount);
+				else
+				{
+					newApp = new QRSApp(appName, app[2].ToObject<DateTime>(), app[3].ToObject<Guid>(), published, app[5].ToObject<DateTime>(), app[6].ToObject<Guid>(), app[7].ToString());
+				}
+				metadataObject.Apps.Add(appID, newApp);
+			};
+
+			GetRepositoryPagedObjects("app", appBody, addAction);
 		}
 
 		private static IList<UnparsedSheet> GetRepositorySheets()
@@ -381,6 +342,35 @@ namespace qs_telemetry_dashboard.MetadataFetch
 					}
 				}
 			}
+		}
+
+
+		private static void GetRepositoryPagedObjects(string type, string body, Action<JArray> addAction)
+		{
+			TelemetryDashboardMain.Logger.Log("Fetching all objects of type '" + type + "'.", LogLevel.Info);
+			Tuple<HttpStatusCode, string> numOfObjects = TelemetryDashboardMain.QRSRequest.MakeRequest("/" + type + "/count", HttpMethod.Get);
+			if (numOfObjects.Item1 != HttpStatusCode.OK)
+			{
+				throw new InvalidResponseException(numOfObjects.Item1.ToString() + " returned when trying to get a count of all objects of type '" + type + "'. Request failed.");
+			}
+			int appCount = JObject.Parse(numOfObjects.Item2)["value"].ToObject<int>();
+
+			int startLocation = 0;
+			Tuple<HttpStatusCode, string> objectResponse;
+			do
+			{
+				objectResponse = TelemetryDashboardMain.QRSRequest.MakeRequest("/" +  type + "/table?skip=" + startLocation + "&take=" + PAGESIZE, HttpMethod.Post, HTTPContentType.json, Encoding.UTF8.GetBytes(body));
+				if (objectResponse.Item1 != HttpStatusCode.Created)
+				{
+					throw new InvalidResponseException(objectResponse.Item1.ToString() + " returned when trying to get objects of type '" + type + "'. Request failed.");
+				}
+				JArray returnedObjects = JObject.Parse(objectResponse.Item2).Value<JArray>("rows");
+				foreach (JArray jObject in returnedObjects)
+				{
+					addAction(jObject);
+				}
+				startLocation += PAGESIZE;
+			} while (startLocation < appCount);
 		}
 	}
 }

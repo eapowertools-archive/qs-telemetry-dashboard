@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using qs_telemetry_dashboard.Helpers;
-using qs_telemetry_dashboard.Models.TelemetryMetadata;
+using qs_telemetry_dashboard.Models;
 
 namespace qs_telemetry_dashboard.ModelWriter
 {
@@ -14,6 +14,7 @@ namespace qs_telemetry_dashboard.ModelWriter
 		internal static string[] HEADERS_SHEETS = new string[] { "AppID", "SheetID", "SheetName", "OwnerID", "Published", "Approved" };
 		internal static string[] HEADERS_VISUALIZATIONS = new string[] { "AppID|SheetID", "VisualizationID", "Type" };
 		internal static string[] HEADERS_USERS = new string[] { "ID", "UserId", "UserDirectory", "Username" };
+		internal static string[] HEADERS_ENGINEINFOS = new string[] { "Hostname", "Key", "Value" };
 
 		internal static void WriteMetadataToFile(TelemetryMetadata meta)
 		{
@@ -24,10 +25,59 @@ namespace qs_telemetry_dashboard.ModelWriter
 				Directory.CreateDirectory(outputDir);
 			}
 
+			WriteEngineInfosMetadataFile(meta);
+			WriteUsersMetadataFile(meta);
 			WriteAppsMetadataFiles(meta);
 		}
 
-		private static void WriteUsersMetadataFiles(TelemetryMetadata meta)
+		private static void WriteEngineInfosMetadataFile(TelemetryMetadata meta)
+		{
+			StringBuilder sb = new StringBuilder();
+
+			WriteHeaders(sb, HEADERS_ENGINEINFOS);
+
+			foreach (EngineInfo engine in meta.EngineInfos)
+			{
+				sb.Append(engine.Hostname);
+				sb.Append(CSV_SEPARATOR);
+				sb.Append("WorkingSetMin");
+				sb.Append(CSV_SEPARATOR);
+				sb.Append(engine.WorkingSetMin);
+				sb.Append('\n');
+
+				sb.Append(engine.Hostname);
+				sb.Append(CSV_SEPARATOR);
+				sb.Append("WorkingSetMax");
+				sb.Append(CSV_SEPARATOR);
+				sb.Append(engine.WorkingSetMax);
+				sb.Append('\n');
+
+				sb.Append(engine.Hostname);
+				sb.Append(CSV_SEPARATOR);
+				sb.Append("PerformanceLogLevel");
+				sb.Append(CSV_SEPARATOR);
+				sb.Append(engine.PerformanceLogLevel);
+				sb.Append('\n');
+
+				sb.Append(engine.Hostname);
+				sb.Append(CSV_SEPARATOR);
+				sb.Append("QIXPerformanceLogLevel");
+				sb.Append(CSV_SEPARATOR);
+				sb.Append(engine.QIXPerformanceLogLevel);
+				sb.Append('\n');
+
+				sb.Append(engine.Hostname);
+				sb.Append(CSV_SEPARATOR);
+				sb.Append("SessionLogLevel");
+				sb.Append(CSV_SEPARATOR);
+				sb.Append(engine.SessionLogLevel);
+				sb.Append('\n');
+			}
+
+			WriteFile(sb, Path.Combine(FileLocationManager.GetTelemetrySharePath(), FileLocationManager.TELEMETRY_OUTPUT_FOLDER_NAME, FileLocationManager.METADATA_ENGINEINFO_FILE_NAME));
+		}
+
+		private static void WriteUsersMetadataFile(TelemetryMetadata meta)
 		{
 			StringBuilder sb = new StringBuilder();
 
@@ -46,7 +96,6 @@ namespace qs_telemetry_dashboard.ModelWriter
 			}
 
 			WriteFile(sb, Path.Combine(FileLocationManager.GetTelemetrySharePath(), FileLocationManager.TELEMETRY_OUTPUT_FOLDER_NAME, FileLocationManager.METADATA_USERS_FILE_NAME));
-
 		}
 
 		private static void WriteAppsMetadataFiles(TelemetryMetadata meta)
@@ -83,7 +132,7 @@ namespace qs_telemetry_dashboard.ModelWriter
 				{
 					sheetsSB.Append(app.Key.ToString());
 					sheetsSB.Append(CSV_SEPARATOR);
-					sheetsSB.Append(sheet.Key.ToString());
+					sheetsSB.Append(sheet.Value.EngineObjectID);
 					sheetsSB.Append(CSV_SEPARATOR);
 					sheetsSB.Append(sheet.Value.Name);
 					sheetsSB.Append(CSV_SEPARATOR);

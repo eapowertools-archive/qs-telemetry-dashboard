@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Net.Http.Headers;
 
-namespace qs_telemetry_dashboard.Models.TelemetryMetadata
+namespace qs_telemetry_dashboard.Models
 {
 	[Serializable]
 	internal class QRSSheet

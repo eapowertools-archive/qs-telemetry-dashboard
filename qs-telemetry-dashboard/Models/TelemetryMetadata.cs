@@ -1,37 +1,45 @@
-﻿using qs_telemetry_dashboard.Models.TelemetryMetadata.UnparsedObject;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace qs_telemetry_dashboard.Models.TelemetryMetadata
+using qs_telemetry_dashboard.Models.UnparsedObject;
+
+namespace qs_telemetry_dashboard.Models
 {
 	[Serializable]
 	internal class TelemetryMetadata
 	{
 		internal DateTime ReloadTime { get; set; }
 
+		internal IDictionary<Guid, QRSApp> Apps { get; set; }
+
+		[field: NonSerialized()]
 		internal IList<EngineInfo> EngineInfos { get; set; }
 
+		[field: NonSerialized()]
 		internal IList<User> Users { get; set; }
 
-		internal IDictionary<Guid, QRSApp> Apps { get; set; }
+		[field: NonSerialized()]
+		internal IList<ExtensionSchema> ExtensionSchemas { get; set; }
 
 		internal TelemetryMetadata()
 		{
 			if (ReloadTime == null)
 			{
-				ReloadTime = DateTime.MinValue;
+				this.ReloadTime = DateTime.MinValue;
 			}
-			EngineInfos = new List<EngineInfo>();
-			Users = new List<User>();
-			Apps = new Dictionary<Guid, QRSApp>();
+			this.Apps = new Dictionary<Guid, QRSApp>();
+
+			this.EngineInfos = new List<EngineInfo>();
+			this.Users = new List<User>();
+			this.ExtensionSchemas = new List<ExtensionSchema>();
 		}
 
 		internal TelemetryMetadata(bool updateTime) : this()
 		{
 			if (updateTime)
 			{
-				ReloadTime = DateTime.Now;
+				this.ReloadTime = DateTime.Now;
 			}
 		}
 

@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace qs_telemetry_dashboard.Models.TelemetryMetadata
+﻿namespace qs_telemetry_dashboard.Models
 {
 	internal enum EngineLogLevel
 	{
@@ -13,7 +10,6 @@ namespace qs_telemetry_dashboard.Models.TelemetryMetadata
 		Debug
 	}
 
-	[Serializable]
 	internal class EngineInfo
 	{
 		internal string Hostname { get; set; }

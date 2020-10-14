@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace qs_telemetry_dashboard.Models.TelemetryMetadata
+namespace qs_telemetry_dashboard.Models
 {
 	[Serializable]
 	internal class QRSApp

@@ -91,6 +91,7 @@
     <Compile Include="Initialize\InitializeEnvironment.cs" />
     <Compile Include="MetadataFetch\MetadataFetchRunner.cs" />
     <Compile Include="Logging\TelemetryLogger.cs" />
+    <Compile Include="Models\ExtensionSchema.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
