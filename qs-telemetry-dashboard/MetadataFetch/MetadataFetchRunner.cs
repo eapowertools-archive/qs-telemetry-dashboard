@@ -236,14 +236,7 @@ namespace qs_telemetry_dashboard.MetadataFetch
 
 		private static IList<UnparsedSheet> GetRepositorySheets()
 		{
-			TelemetryDashboardMain.Logger.Log("Fetching all sheets.", LogLevel.Info);
-			Tuple<HttpStatusCode, string> numberOfSheets = TelemetryDashboardMain.QRSRequest.MakeRequest("/app/object/count?filter=objectType eq 'sheet'", HttpMethod.Get);
-			if (numberOfSheets.Item1 != HttpStatusCode.OK)
-			{
-				throw new InvalidResponseException(numberOfSheets.Item1.ToString() + " returned when trying to get a count of all the sheets. Request failed.");
-			}
-			int sheetCount = JObject.Parse(numberOfSheets.Item2)["value"].ToObject<int>();
-
+			int sheetCount = GetRepositoryObjectsCount("app/object");
 
 			string sheetBody = @"
 				{
@@ -344,8 +337,7 @@ namespace qs_telemetry_dashboard.MetadataFetch
 			}
 		}
 
-
-		private static void GetRepositoryPagedObjects(string type, string body, Action<JArray> addAction)
+		private static int GetRepositoryObjectsCount(string type)
 		{
 			TelemetryDashboardMain.Logger.Log("Fetching all objects of type '" + type + "'.", LogLevel.Info);
 			Tuple<HttpStatusCode, string> numOfObjects = TelemetryDashboardMain.QRSRequest.MakeRequest("/" + type + "/count", HttpMethod.Get);
@@ -353,7 +345,12 @@ namespace qs_telemetry_dashboard.MetadataFetch
 			{
 				throw new InvalidResponseException(numOfObjects.Item1.ToString() + " returned when trying to get a count of all objects of type '" + type + "'. Request failed.");
 			}
-			int appCount = JObject.Parse(numOfObjects.Item2)["value"].ToObject<int>();
+			return JObject.Parse(numOfObjects.Item2)["value"].ToObject<int>();
+		}
+
+		private static void GetRepositoryPagedObjects(string type, string body, Action<JArray> addAction)
+		{
+			int objectCount = GetRepositoryObjectsCount(type);
 
 			int startLocation = 0;
 			Tuple<HttpStatusCode, string> objectResponse;
@@ -370,7 +367,7 @@ namespace qs_telemetry_dashboard.MetadataFetch
 					addAction(jObject);
 				}
 				startLocation += PAGESIZE;
-			} while (startLocation < appCount);
+			} while (startLocation < objectCount);
 		}
 	}
 }
