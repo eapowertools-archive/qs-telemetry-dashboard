@@ -15,6 +15,7 @@ namespace qs_telemetry_dashboard.ModelWriter
 		internal static string[] HEADERS_VISUALIZATIONS = new string[] { "AppID|SheetID", "VisualizationID", "Type" };
 		internal static string[] HEADERS_USERS = new string[] { "ID", "UserId", "UserDirectory", "Username" };
 		internal static string[] HEADERS_ENGINEINFOS = new string[] { "Hostname", "Key", "Value" };
+		internal static string[] HEADERS_EXTENSIONSCHEMAS = new string[] { "ID", "Name", "Type" };
 
 		internal static void WriteMetadataToFile(TelemetryMetadata meta)
 		{
@@ -25,9 +26,29 @@ namespace qs_telemetry_dashboard.ModelWriter
 				Directory.CreateDirectory(outputDir);
 			}
 
+			WriteExtensionSchemasMetadataFile(meta);
 			WriteEngineInfosMetadataFile(meta);
 			WriteUsersMetadataFile(meta);
 			WriteAppsMetadataFiles(meta);
+		}
+
+		private static void WriteExtensionSchemasMetadataFile(TelemetryMetadata meta)
+		{
+			StringBuilder sb = new StringBuilder();
+
+			WriteHeaders(sb, HEADERS_EXTENSIONSCHEMAS);
+
+			foreach (ExtensionSchema schema in meta.ExtensionSchemas)
+			{
+				sb.Append(schema.ID);
+				sb.Append(CSV_SEPARATOR);
+				sb.Append(schema.Name);
+				sb.Append(CSV_SEPARATOR);
+				sb.Append(schema.Type);
+				sb.Append('\n');
+			}
+
+			WriteFile(sb, Path.Combine(FileLocationManager.GetTelemetrySharePath(), FileLocationManager.TELEMETRY_OUTPUT_FOLDER_NAME, FileLocationManager.METADATA_EXTENSIONSCHEMAS_FILE_NAME));
 		}
 
 		private static void WriteEngineInfosMetadataFile(TelemetryMetadata meta)
@@ -74,7 +95,7 @@ namespace qs_telemetry_dashboard.ModelWriter
 				sb.Append('\n');
 			}
 
-			WriteFile(sb, Path.Combine(FileLocationManager.GetTelemetrySharePath(), FileLocationManager.TELEMETRY_OUTPUT_FOLDER_NAME, FileLocationManager.METADATA_ENGINEINFO_FILE_NAME));
+			WriteFile(sb, Path.Combine(FileLocationManager.GetTelemetrySharePath(), FileLocationManager.TELEMETRY_OUTPUT_FOLDER_NAME, FileLocationManager.METADATA_ENGINEINFOS_FILE_NAME));
 		}
 
 		private static void WriteUsersMetadataFile(TelemetryMetadata meta)
