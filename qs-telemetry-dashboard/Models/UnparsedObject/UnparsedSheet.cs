@@ -1,5 +1,6 @@
 ﻿using System;
-namespace qs_telemetry_dashboard.Models.TelemetryMetadata.UnparsedObject
+
+namespace qs_telemetry_dashboard.Models.UnparsedObject
 {
 	internal class UnparsedSheet
 	{

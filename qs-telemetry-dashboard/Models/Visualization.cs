@@ -1,5 +1,6 @@
 ﻿using System;
-namespace qs_telemetry_dashboard.Models.TelemetryMetadata
+
+namespace qs_telemetry_dashboard.Models
 {
 	[Serializable]
 	internal class Visualization
