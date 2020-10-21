@@ -120,9 +120,16 @@ namespace qs_telemetry_dashboard
 			}
 			else if (ArgsManager.InitializeRun)
 			{
-				Logger.Log("Initialize Mode:", LogLevel.Info);
+				Logger.Log("Preparing to run initialize mode, this will create two tasks, import an application and create two data connections in your environment, press 'q' to quit or any other key to proceed:", LogLevel.Info);
 
-				return InitializeEnvironment.Run();
+				ConsoleKeyInfo keyPressed = Console.ReadKey();
+				if (keyPressed.Key != ConsoleKey.Q)
+				{
+					Logger.Log("Initialize Mode:", LogLevel.Info);
+
+					return InitializeEnvironment.Run();
+				}
+				return 0;
 			}
 			else if (ArgsManager.FetchMetadataRun)
 			{
