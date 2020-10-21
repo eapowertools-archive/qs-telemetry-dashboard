@@ -73,10 +73,13 @@ namespace qs_telemetry_dashboard.Initialize
 
 			if (listOfApps.Count == 1)
 			{
+				TelemetryDashboardMain.Logger.Log("A single existing App 'TelemetryDashboard' was found.", LogLevel.Info);
+
 				string appID = listOfApps[0]["id"].ToString();
 				Tuple<HttpStatusCode, string> replaceAppResponse = TelemetryDashboardMain.QRSRequest.MakeRequest("/app/upload/replace?targetappid=" + appID, HttpMethod.Post, HTTPContentType.app, Properties.Resources.Telemetry_Dashboard);
 				if (replaceAppResponse.Item1 == HttpStatusCode.Created)
 				{
+					TelemetryDashboardMain.Logger.Log("App 'TelemetryDashboard' was replaced.", LogLevel.Info);
 					return JObject.Parse(replaceAppResponse.Item2)["id"].ToString();
 				}
 				else
@@ -88,6 +91,8 @@ namespace qs_telemetry_dashboard.Initialize
 
 			if (listOfApps.Count > 1)
 			{
+				TelemetryDashboardMain.Logger.Log("Multiple existing Apps 'TelemetryDashboard' were found, they will be renamed.", LogLevel.Info);
+
 				for (int i = 0; i < listOfApps.Count; i++)
 				{
 					listOfApps[i]["name"] = listOfApps[i]["name"] + "-old";
@@ -106,6 +111,8 @@ namespace qs_telemetry_dashboard.Initialize
 			{
 				throw new InvalidResponseException(apps.Item1.ToString() + " returned when trying to upload Telemetry Dashboard app. Request failed.");
 			}
+			TelemetryDashboardMain.Logger.Log("App 'TelemetryDashboard' was successfully imported.", LogLevel.Info);
+
 			return JObject.Parse(uploadAppResponse.Item2)["id"].ToString();
 		}
 
@@ -121,6 +128,8 @@ namespace qs_telemetry_dashboard.Initialize
 			JArray listOfDataconnections = JArray.Parse(dataConnections.Item2);
 			if (listOfDataconnections.Count == 0)
 			{
+				TelemetryDashboardMain.Logger.Log("Existing Data Connection 'TelemetryMetadata' was not found.", LogLevel.Info);
+
 				string connectionStringPath = Path.Combine(FileLocationManager.GetTelemetrySharePath(), FileLocationManager.TELEMETRY_OUTPUT_FOLDER_NAME) + @"\";
 				TelemetryDashboardMain.Logger.Log("Building body for 'TelemetryMetadata' data connection. Connection string path: " + connectionStringPath, LogLevel.Debug);
 				connectionStringPath = connectionStringPath.Replace("\\", "\\\\");
@@ -138,9 +147,13 @@ namespace qs_telemetry_dashboard.Initialize
 				{
 					throw new InvalidResponseException(dataConnections.Item1.ToString() + " returned when trying to create 'TelemetryMetadata' data connection. Request failed.");
 				}
+				TelemetryDashboardMain.Logger.Log("Data Connection 'TelemetryMetadata' was created.", LogLevel.Info);
+
 			}
 			else
 			{
+				TelemetryDashboardMain.Logger.Log("Existing Data Connection 'TelemetryMetadata' was found.", LogLevel.Info);
+
 				listOfDataconnections[0]["connectionstring"] = Path.Combine(FileLocationManager.GetTelemetrySharePath(), FileLocationManager.TELEMETRY_OUTPUT_FOLDER_NAME) + "\\";
 				listOfDataconnections[0]["modifiedDate"] = DateTime.UtcNow.ToString("s") + "Z";
 				string appId = listOfDataconnections[0]["id"].ToString();
@@ -149,6 +162,7 @@ namespace qs_telemetry_dashboard.Initialize
 				{
 					throw new InvalidResponseException(dataConnections.Item1.ToString() + " returned when trying to update 'TelemetryMetadata' data connection. Request failed.");
 				}
+				TelemetryDashboardMain.Logger.Log("Data Connection 'TelemetryMetadata' was updated.", LogLevel.Info);
 			}
 
 			// Add EngineSettings dataconnection
@@ -160,6 +174,8 @@ namespace qs_telemetry_dashboard.Initialize
 			listOfDataconnections = JArray.Parse(engineSettingDataconnection.Item2);
 			if (listOfDataconnections.Count == 0)
 			{
+				TelemetryDashboardMain.Logger.Log("Existing Data Connection 'EngineSettingsFolder' was not found.", LogLevel.Info);
+
 				string body = @"
 					{
 						'name': 'EngineSettingsFolder',
@@ -173,6 +189,11 @@ namespace qs_telemetry_dashboard.Initialize
 				{
 					throw new InvalidResponseException(dataConnections.Item1.ToString() + " returned when trying to create 'EngineSettingsFolder' data connection. Request failed.");
 				}
+				TelemetryDashboardMain.Logger.Log("Data Connection 'EngineSettingsFolder' was updated.", LogLevel.Info);
+			}
+			else
+			{
+				TelemetryDashboardMain.Logger.Log("Existing Data Connection 'EngineSettingsFolder' was found.", LogLevel.Info);
 			}
 
 			return;
@@ -194,7 +215,7 @@ namespace qs_telemetry_dashboard.Initialize
 				string body = @"
 			{
 				'path': '" + telemetryDashboardPath.Replace("\\", "\\\\") + @"',
-				'parameters': '-metadatafetch',
+				'parameters': '-fetchmetadata',
 				'name': 'TelemetryDashboard-1-Generate-Metadata',
 				'taskType': 1,
 				'enabled': true,
@@ -235,6 +256,8 @@ namespace qs_telemetry_dashboard.Initialize
 
 			if (listOfTasks.Count == 0)
 			{
+				TelemetryDashboardMain.Logger.Log("Existing 'TelemetryDashboard-2-Reload-Dashboard' was not found.", LogLevel.Info);
+
 				string body = @"
 				{
 					'compositeEvents': [
@@ -287,9 +310,11 @@ namespace qs_telemetry_dashboard.Initialize
 				{
 					throw new InvalidResponseException(createTaskResponse.Item1.ToString() + " returned when trying to create 'TelemetryDashboard-2-Reload-Dashboard' external task. Request failed.");
 				}
+				TelemetryDashboardMain.Logger.Log("Task 'TelemetryDashboard-2-Reload-Dashboard' was created.", LogLevel.Info);
 			}
 			else
 			{
+				TelemetryDashboardMain.Logger.Log("Existing 'TelemetryDashboard-2-Reload-Dashboard' was found.", LogLevel.Info);
 				listOfTasks[0]["app"] = JObject.Parse(@"{ 'id': '" + appId + "'}");
 				listOfTasks[0]["modifiedDate"] = DateTime.UtcNow.ToString("s") + "Z";
 				string reloadTaskID = listOfTasks[0]["id"].ToString();
@@ -298,6 +323,7 @@ namespace qs_telemetry_dashboard.Initialize
 				{
 					throw new InvalidResponseException(updatedTaskResponse.Item1.ToString() + " returned when trying to update 'TelemetryDashboard-2-Reload-Dashboard' external task. Request failed.");
 				}
+				TelemetryDashboardMain.Logger.Log("Task 'TelemetryDashboard-2-Reload-Dashboard' was updated.", LogLevel.Info);
 			}
 
 			return;
