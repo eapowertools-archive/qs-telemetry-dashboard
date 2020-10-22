@@ -17,6 +17,8 @@ namespace qs_telemetry_dashboard.ModelWriter
 		internal static string[] HEADERS_ENGINEINFOS = new string[] { "Hostname", "Key", "Value" };
 		internal static string[] HEADERS_EXTENSIONSCHEMAS = new string[] { "ID", "Name", "Type" };
 		internal static string[] HEADERS_EXTENSIONS = new string[] { "ID", "CreatedDate", "Name", "OwnerID", "DashboardBundle", "VisualizationBundle" };
+		internal static string[] HEADERS_SYSTEMINFO = new string[] { "version", "ReleaseLabel" };
+
 
 		internal static void WriteMetadataToFile(TelemetryMetadata meta)
 		{
@@ -27,11 +29,29 @@ namespace qs_telemetry_dashboard.ModelWriter
 				Directory.CreateDirectory(outputDir);
 			}
 
+			WriteSystemInfoFile(meta);
 			WriteExtensionsMetadataFile(meta);
 			WriteExtensionSchemasMetadataFile(meta);
 			WriteEngineInfosMetadataFile(meta);
 			WriteUsersMetadataFile(meta);
 			WriteAppsMetadataFiles(meta);
+		}
+
+		private static void WriteSystemInfoFile(TelemetryMetadata meta)
+		{
+			StringBuilder sb = new StringBuilder();
+
+			WriteHeaders(sb, HEADERS_SYSTEMINFO);
+
+			foreach (Extension extension in meta.Extensions)
+			{
+				sb.Append(meta.Version);
+				sb.Append(CSV_SEPARATOR);
+				sb.Append(meta.ReleaseLabel);
+				sb.Append('\n');
+			}
+
+			WriteFile(sb, Path.Combine(FileLocationManager.GetTelemetrySharePath(), FileLocationManager.TELEMETRY_OUTPUT_FOLDER_NAME, FileLocationManager.METADATA_SYSTEMINFO_FILE_NAME));
 		}
 
 		private static void WriteExtensionsMetadataFile(TelemetryMetadata meta)

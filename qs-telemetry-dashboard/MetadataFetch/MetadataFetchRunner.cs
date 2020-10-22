@@ -44,6 +44,7 @@ namespace qs_telemetry_dashboard.MetadataFetch
 
 			newMetadata = new TelemetryMetadata(true);
 
+			GetAboutServiceInfo(newMetadata);
 			GetRepositoryExtensions(newMetadata);
 			GetRepositoryExtensionSchemas(newMetadata);
 			GetRepositoryEngineInfos(newMetadata);
@@ -63,6 +64,16 @@ namespace qs_telemetry_dashboard.MetadataFetch
 			MetadataWriter.WriteMetadataToFile(newMetadata);
 
 			return 0;
+		}
+
+		private static void GetAboutServiceInfo(TelemetryMetadata telemetryMetadata)
+		{
+			TelemetryDashboardMain.Logger.Log("Getting system info from About Service on port 9032.", LogLevel.Info);
+
+			Tuple<HttpStatusCode, string> aboutResponse = TelemetryDashboardMain.QRSRequest.MakeRequest("/v1/systemInfo", HttpMethod.Get, HTTPContentType.json, null, false, "9032");
+			JObject aboutJSON = JObject.Parse(aboutResponse.Item2);
+			telemetryMetadata.Version = aboutJSON["version"].ToString();
+			telemetryMetadata.ReleaseLabel = aboutJSON["releaseLabel"].ToString();
 		}
 
 		private static void GetRepositoryExtensions(TelemetryMetadata metadataObject)

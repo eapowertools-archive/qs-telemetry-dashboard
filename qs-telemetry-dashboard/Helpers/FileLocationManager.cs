@@ -19,6 +19,7 @@ namespace qs_telemetry_dashboard.Helpers
 		internal static string TELEMETRY_EXE_FILE_NAME = "TelemetryDashboard.exe";
 		internal static string METADATA_BINARY_FILE_NAME = "metadata.tdm";
 
+		internal static string METADATA_SYSTEMINFO_FILE_NAME = "systemInfo.csv";
 		internal static string METADATA_EXTENSIONS_FILE_NAME = "extensions.csv";
 		internal static string METADATA_EXTENSIONSCHEMAS_FILE_NAME = "extensionSchemas.csv";
 		internal static string METADATA_ENGINEINFOS_FILE_NAME = "engineInfos.csv";
