@@ -12,12 +12,18 @@ namespace qs_telemetry_dashboard.Models
 
 		internal Guid OwnerID { get; set; }
 
-		internal Extension(Guid id, DateTime createdDate, string name, Guid ownerID)
+		internal bool DashboardBundle { get; set; }
+
+		internal bool VisualizationBundle { get; set; }
+
+		internal Extension(Guid id, DateTime createdDate, string name, Guid ownerID, bool dashboardBundle, bool visualizationBundle)
 		{
 			this.ID = id;
 			this.CreatedDate = createdDate;
 			this.Name = name;
 			this.OwnerID = ownerID;
+			this.DashboardBundle = dashboardBundle;
+			this.VisualizationBundle = visualizationBundle;
 		}
 	}
 }

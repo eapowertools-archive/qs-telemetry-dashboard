@@ -89,12 +89,54 @@ namespace qs_telemetry_dashboard.MetadataFetch
 							'columnType': 'Property',
 							'definition': 'owner.id',
 							'name': 'owner.id'
-						}],
+						},
+						{
+							'name':'customProperties',
+							'columnType':'List',
+							'definition':'CustomPropertyValue',
+							'list':[
+								{
+									'name':'definition',
+									'columnType':'Property',
+									'definition':'definition'
+								},
+								{
+									'name':'value',
+									'columnType':'Property',
+									'definition':'value'
+								}
+							]
+						}
+						],
 						'entity': 'Extension'
 				}";
 
 
-			Action<JArray> addAction = (extension) => metadataObject.Extensions.Add(new Extension(extension[0].ToObject<Guid>(), extension[1].ToObject<DateTime>(), extension[2].ToString(), extension[3].ToObject<Guid>()));
+			Action<JArray> addAction = (extension) =>
+			{
+				bool dashboardBundle = false;
+				bool visualizationBundle = false;
+				foreach (JArray cp in extension[4]["rows"])
+				{
+					if (cp[0]["name"].ToString() == "ExtensionBundle")
+					{
+						string cpValue = cp[1].ToString();
+						if (cpValue == "Dashboard-bundle")
+						{
+							dashboardBundle = true;
+						}
+						else if (cpValue == "Visualization-bundle")
+						{
+							visualizationBundle = true;
+						}
+						else
+						{
+							TelemetryDashboardMain.Logger.Log("Found invalid custom property for 'ExtensionBundle'. Value was: " + cpValue, LogLevel.Error);
+						}
+					}
+				}
+				metadataObject.Extensions.Add(new Extension(extension[0].ToObject<Guid>(), extension[1].ToObject<DateTime>(), extension[2].ToString(), extension[3].ToObject<Guid>(), dashboardBundle, visualizationBundle));
+			};
 
 			GetRepositoryPagedObjects("extension", extensionBody, addAction);
 		}

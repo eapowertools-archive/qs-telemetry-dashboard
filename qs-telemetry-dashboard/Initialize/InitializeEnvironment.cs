@@ -1,8 +1,8 @@
 ﻿using System;
 using System.IO;
-using System.Management;
 using System.Net;
 using System.Net.Http;
+using System.Security.AccessControl;
 using System.Text;
 using Newtonsoft.Json.Linq;
 using qs_telemetry_dashboard.Exceptions;
@@ -55,6 +55,26 @@ namespace qs_telemetry_dashboard.Initialize
 					}
 					TelemetryDashboardMain.Logger.Log("Copying TelemetryDashboard.exe.", LogLevel.Debug);
 					File.Copy(FileLocationManager.WorkingTelemetryDashboardExePath, telemetryExePath);
+
+					// Change Permissions to allow service account:
+					string serviceAccount = "qliktest\\qservice";
+
+					// Create a new DirectoryInfo object.
+					DirectoryInfo dInfo = new DirectoryInfo(telemetrySharePath);
+					FileInfo fInfo = new FileInfo(telemetryExePath);
+
+					// Get a DirectorySecurity object that represents the
+					// current security settings.
+					DirectorySecurity dSecurity = dInfo.GetAccessControl();
+					FileSecurity fSecurity = fInfo.GetAccessControl();
+
+					// Add the FileSystemAccessRule to the security settings.
+					dSecurity.AddAccessRule(new FileSystemAccessRule(serviceAccount, FileSystemRights.FullControl, AccessControlType.Allow));
+					fSecurity.AddAccessRule(new FileSystemAccessRule(serviceAccount, FileSystemRights.FullControl, AccessControlType.Allow));
+
+					// Set the new access settings.
+					dInfo.SetAccessControl(dSecurity);
+					fInfo.SetAccessControl(fSecurity);
 				}
 			}
 
@@ -226,8 +246,8 @@ namespace qs_telemetry_dashboard.Initialize
 
 				string body = @"
 			{
-				'path': '" + telemetryDashboardPath.Replace("\\", "\\\\") + @"',
-				'parameters': '-fetchmetadata -tasktriggered',
+				'path': 'cmd.exe',
+				'parameters': '/C """ + telemetryDashboardPath.Replace("\\", "\\\\") + @""" -fetchmetadata -tasktriggered',
 				'name': 'TelemetryDashboard-1-Generate-Metadata',
 				'taskType': 1,
 				'enabled': true,
@@ -340,8 +360,6 @@ namespace qs_telemetry_dashboard.Initialize
 
 			return;
 		}
-
-
 
 		//public string RemoveTasks()
 		//{

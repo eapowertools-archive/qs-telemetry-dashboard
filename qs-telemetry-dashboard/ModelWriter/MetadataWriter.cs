@@ -16,7 +16,7 @@ namespace qs_telemetry_dashboard.ModelWriter
 		internal static string[] HEADERS_USERS = new string[] { "ID", "UserId", "UserDirectory", "Username" };
 		internal static string[] HEADERS_ENGINEINFOS = new string[] { "Hostname", "Key", "Value" };
 		internal static string[] HEADERS_EXTENSIONSCHEMAS = new string[] { "ID", "Name", "Type" };
-		internal static string[] HEADERS_EXTENSIONS = new string[] { "ID", "CreatedDate", "Name", "OwnerID" };
+		internal static string[] HEADERS_EXTENSIONS = new string[] { "ID", "CreatedDate", "Name", "OwnerID", "DashboardBundle", "VisualizationBundle" };
 
 		internal static void WriteMetadataToFile(TelemetryMetadata meta)
 		{
@@ -49,6 +49,10 @@ namespace qs_telemetry_dashboard.ModelWriter
 				sb.Append(extension.Name);
 				sb.Append(CSV_SEPARATOR);
 				sb.Append(extension.OwnerID.ToString());
+				sb.Append(CSV_SEPARATOR);
+				sb.Append(extension.DashboardBundle.ToString());
+				sb.Append(CSV_SEPARATOR);
+				sb.Append(extension.VisualizationBundle.ToString());
 				sb.Append('\n');
 			}
 
