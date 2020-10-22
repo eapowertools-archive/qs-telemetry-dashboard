@@ -159,7 +159,6 @@
     <EmbeddedResource Include="..\packages\QlikSense.NetSDK.15.1.1\lib\net452\Qlik.Engine.dll">
       <Link>ReferencedAssemblies\Qlik.Engine.dll</Link>
     </EmbeddedResource>
-    <Content Include="readme.txt" />
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
