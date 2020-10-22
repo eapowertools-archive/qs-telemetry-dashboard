@@ -18,31 +18,37 @@ namespace qs_telemetry_dashboard.Initialize
 
 			// get location to copy exe to
 			//todo don't copy if already running in share folder
-			string telemetryPath = Path.Combine(FileLocationManager.GetTelemetrySharePath(), FileLocationManager.TELEMETRY_EXE_FILE_NAME);
+			string telemetrySharePath = FileLocationManager.GetTelemetrySharePath();
+			string telemetryExePath = Path.Combine(telemetrySharePath, FileLocationManager.TELEMETRY_EXE_FILE_NAME);
+
+			TelemetryDashboardMain.Logger.Log("Current TelemetryDashboard.exe path: " + FileLocationManager.WorkingTelemetryDashboardExePath, LogLevel.Debug);
+			TelemetryDashboardMain.Logger.Log("Share folder TelemetryDashboard.exe path: " + telemetryExePath, LogLevel.Debug);
+			TelemetryDashboardMain.Logger.Log("Share folder TelemetryDashboard.exe root path: " + telemetrySharePath, LogLevel.Debug);
 
 			//todo fix this if condition
-			TelemetryDashboardMain.Logger.Log("Current TelemetryDashboard.exe path: " + FileLocationManager.WorkingTelemetryDashboardExePath, LogLevel.Debug);
-			TelemetryDashboardMain.Logger.Log("Share folder TelemetryDashboard.exe path: " + telemetryPath, LogLevel.Debug);
-			TelemetryDashboardMain.Logger.Log("Share folder TelemetryDashboard.exe root path: " + telemetryPath, LogLevel.Debug);
-
-			if (telemetryPath != FileLocationManager.WorkingTelemetryDashboardExePath)
+			if (telemetryExePath != FileLocationManager.WorkingTelemetryDashboardExePath)
 			{
 				bool doCopy = true;
-				if (File.Exists(telemetryPath))
+				if (File.Exists(telemetryExePath))
 				{
 					try
 					{
-						File.Delete(telemetryPath);
+						File.Delete(telemetryExePath);
 					}
 					catch (UnauthorizedAccessException)
 					{
-						TelemetryDashboardMain.Logger.Log(string.Format("Tried to delete '{0}', unauthorizaed access. This probably means you are running this executable and can ignore the error, OR you do not have access to delete this file.", telemetryPath), LogLevel.Debug);
+						TelemetryDashboardMain.Logger.Log(string.Format("Tried to delete '{0}', unauthorizaed access. This probably means you are running this executable and can ignore the error, OR you do not have access to delete this file.", telemetryExePath), LogLevel.Debug);
 						doCopy = false;
 					}
 				}
 				if (doCopy)
 				{
-					File.Copy(FileLocationManager.WorkingTelemetryDashboardExePath, telemetryPath);
+					if (!Directory.Exists(telemetrySharePath))
+					{
+						Directory.CreateDirectory(telemetrySharePath);
+
+					}
+					File.Copy(FileLocationManager.WorkingTelemetryDashboardExePath, telemetryExePath);
 				}
 			}
 
@@ -54,7 +60,7 @@ namespace qs_telemetry_dashboard.Initialize
 			CreateDataConnections();
 
 			TelemetryDashboardMain.Logger.Log("Ready to create tasks.", LogLevel.Debug);
-			CreateTasks(appGUID, telemetryPath);
+			CreateTasks(appGUID, telemetryExePath);
 
 			return 0;
 		}
@@ -193,7 +199,7 @@ namespace qs_telemetry_dashboard.Initialize
 			}
 			else
 			{
-				TelemetryDashboardMain.Logger.Log("Existing Data Connection 'EngineSettingsFolder' was found.", LogLevel.Info);
+				TelemetryDashboardMain.Logger.Log("Existing Data Connection 'EngineSettingsFolder' already exists.", LogLevel.Info);
 			}
 
 			return;

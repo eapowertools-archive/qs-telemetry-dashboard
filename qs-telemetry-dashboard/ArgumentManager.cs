@@ -18,8 +18,10 @@ namespace qs_telemetry_dashboard
 @"Telemetry Dashboard
 
 Arguments:
---help				Show help
---fetchMetadata		";
+-debug				activate debug logging
+-initialize			initialize the environment with app, tasks and data connections
+-fetchmetadata		generated metadata files to Telemetry Dashboard output folder (must be run with -interactive unless running from batch file)
+-test				test to make sure certificates are in place and the QRS is running";
 
 		public ArgumentManager(string[] args, bool isComandLineRun)
 		{
@@ -38,7 +40,7 @@ Arguments:
 				}
 				else
 				{
-					Interactive = false;
+					Interactive = true;
 					InitializeRun = true;
 				}
 			}
