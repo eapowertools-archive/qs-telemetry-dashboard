@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Management;
 using System.Net;
 using System.Net.Http;
 using Newtonsoft.Json.Linq;
@@ -18,6 +19,7 @@ namespace qs_telemetry_dashboard.Helpers
 		internal static string TELEMETRY_EXE_FILE_NAME = "TelemetryDashboard.exe";
 		internal static string METADATA_BINARY_FILE_NAME = "metadata.tdm";
 
+		internal static string METADATA_EXTENSIONS_FILE_NAME = "extensions.csv";
 		internal static string METADATA_EXTENSIONSCHEMAS_FILE_NAME = "extensionSchemas.csv";
 		internal static string METADATA_ENGINEINFOS_FILE_NAME = "engineInfos.csv";
 		internal static string METADATA_USERS_FILE_NAME = "users.csv";
@@ -63,6 +65,43 @@ namespace qs_telemetry_dashboard.Helpers
 			string shareRootPath = listOfServiceClusters[0]["settings"]["sharedPersistenceProperties"]["rootFolder"].ToString();
 
 			return Path.Combine(shareRootPath, TELEMETRY_FOLDER_NAME);
+		}
+
+		internal static string GetPath(string uncPath)
+		{
+			try
+			{
+				// remove the "\\" from the UNC path and split the path
+				uncPath = uncPath.Replace(@"\\", "");
+				string[] uncParts = uncPath.Split(new char[] { '\\' }, StringSplitOptions.RemoveEmptyEntries);
+				if (uncParts.Length < 2)
+					return "[UNRESOLVED UNC PATH: " + uncPath + "]";
+				// Get a connection to the server as found in the UNC path
+				ManagementScope scope = new ManagementScope(@"\\" + uncParts[0] + @"\root\cimv2");
+				// Query the server for the share name
+				SelectQuery query = new SelectQuery("Select * From Win32_Share Where Name = '" + uncParts[1] + "'");
+				ManagementObjectSearcher searcher = new ManagementObjectSearcher(scope, query);
+
+				// Get the path
+				string path = string.Empty;
+				foreach (ManagementObject obj in searcher.Get())
+				{
+					path = obj["path"].ToString();
+				}
+
+				// Append any additional folders to the local path name
+				if (uncParts.Length > 2)
+				{
+					for (int i = 2; i < uncParts.Length; i++)
+						path = path.EndsWith(@"\") ? path + uncParts[i] : path + @"\" + uncParts[i];
+				}
+
+				return path;
+			}
+			catch (Exception ex)
+			{
+				return "[ERROR RESOLVING UNC PATH: " + uncPath + ": " + ex.Message + "]";
+			}
 		}
 	}
 }

@@ -22,6 +22,9 @@ namespace qs_telemetry_dashboard.Models
 		[field: NonSerialized()]
 		internal IList<ExtensionSchema> ExtensionSchemas { get; set; }
 
+		[field: NonSerialized()]
+		internal IList<Extension> Extensions { get; set; }
+
 		internal TelemetryMetadata()
 		{
 			if (ReloadTime == null)
@@ -33,6 +36,7 @@ namespace qs_telemetry_dashboard.Models
 			this.EngineInfos = new List<EngineInfo>();
 			this.Users = new List<User>();
 			this.ExtensionSchemas = new List<ExtensionSchema>();
+			this.Extensions = new List<Extension>();
 		}
 
 		internal TelemetryMetadata(bool updateTime) : this()
