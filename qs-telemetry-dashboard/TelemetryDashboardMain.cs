@@ -136,11 +136,25 @@ namespace qs_telemetry_dashboard
 				Logger.Log("Preparing to run initialize mode, this will create two tasks, import an application and create two data connections in your environment, press 'q' to quit or any other key to proceed:", LogLevel.Info);
 
 				ConsoleKeyInfo keyPressed = Console.ReadKey();
+				Logger.Log("Please enter the 'DOMAIN\\user' for the service account running Qlik Sense Enterprise (without quotes, example: QLIK\\jparis): ", LogLevel.Info);
+
+				string serviceAccount = Console.ReadLine();
+				if (serviceAccount.StartsWith("'"))
+				{
+					serviceAccount = serviceAccount.Substring(1);
+				}
+				if (serviceAccount.EndsWith("'"))
+				{
+					serviceAccount = serviceAccount.Substring(0, serviceAccount.Length - 1);
+				}
+				Logger.Log("The user '" + serviceAccount + "' was entered.", LogLevel.Info);
+
+
 				if (keyPressed.Key != ConsoleKey.Q)
 				{
 					Logger.Log("Initialize Mode:", LogLevel.Info);
 
-					return InitializeEnvironment.Run();
+					return InitializeEnvironment.Run(serviceAccount);
 				}
 				return 0;
 			}

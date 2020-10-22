@@ -3,6 +3,7 @@ using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Security.AccessControl;
+using System.Security.Principal;
 using System.Text;
 using Newtonsoft.Json.Linq;
 using qs_telemetry_dashboard.Exceptions;
@@ -13,7 +14,7 @@ namespace qs_telemetry_dashboard.Initialize
 {
 	internal class InitializeEnvironment
 	{
-		internal static int Run()
+		internal static int Run(string serviceAccount)
 		{
 			TelemetryDashboardMain.Logger.Log("Running in initialize mode.", LogLevel.Info);
 
@@ -56,25 +57,26 @@ namespace qs_telemetry_dashboard.Initialize
 					TelemetryDashboardMain.Logger.Log("Copying TelemetryDashboard.exe.", LogLevel.Debug);
 					File.Copy(FileLocationManager.WorkingTelemetryDashboardExePath, telemetryExePath);
 
-					// Change Permissions to allow service account:
-					string serviceAccount = "qliktest\\qservice";
+					try
+					{
+						// Change Permissions to allow service account:
+						DirectoryInfo dInfo = new DirectoryInfo(telemetrySharePath);
+						FileInfo fInfo = new FileInfo(telemetryExePath);
 
-					// Create a new DirectoryInfo object.
-					DirectoryInfo dInfo = new DirectoryInfo(telemetrySharePath);
-					FileInfo fInfo = new FileInfo(telemetryExePath);
+						DirectorySecurity dSecurity = dInfo.GetAccessControl();
+						FileSecurity fSecurity = fInfo.GetAccessControl();
 
-					// Get a DirectorySecurity object that represents the
-					// current security settings.
-					DirectorySecurity dSecurity = dInfo.GetAccessControl();
-					FileSecurity fSecurity = fInfo.GetAccessControl();
+						dSecurity.AddAccessRule(new FileSystemAccessRule(serviceAccount, FileSystemRights.FullControl, AccessControlType.Allow));
+						fSecurity.AddAccessRule(new FileSystemAccessRule(serviceAccount, FileSystemRights.FullControl, AccessControlType.Allow));
 
-					// Add the FileSystemAccessRule to the security settings.
-					dSecurity.AddAccessRule(new FileSystemAccessRule(serviceAccount, FileSystemRights.FullControl, AccessControlType.Allow));
-					fSecurity.AddAccessRule(new FileSystemAccessRule(serviceAccount, FileSystemRights.FullControl, AccessControlType.Allow));
-
-					// Set the new access settings.
-					dInfo.SetAccessControl(dSecurity);
-					fInfo.SetAccessControl(fSecurity);
+						dInfo.SetAccessControl(dSecurity);
+						fInfo.SetAccessControl(fSecurity);
+					}
+					catch (IdentityNotMappedException)
+					{
+						TelemetryDashboardMain.Logger.Log("Invalid service account '"+serviceAccount+"' was entered. Initialize failed to complete.", LogLevel.Error);
+						return 1;
+					}
 				}
 			}
 
