@@ -160,14 +160,20 @@ namespace qs_telemetry_dashboard.MetadataFetch
 			{
 				throw new InvalidResponseException(extensionSchemas.Item1.ToString() + " returned when trying to get all extension schemas. Request failed.");
 			}
+			TelemetryDashboardMain.Logger.Log("Got some extension schemas.", LogLevel.Debug);
+
 			JObject parsedExtensionSchemas = JObject.Parse(extensionSchemas.Item2);
 
 			foreach (JProperty schema in parsedExtensionSchemas.Children())
 			{
-				string type = schema.Value["type"].ToString();
-				if (type == "visualization")
+				JToken type = schema.Value["type"];
+				if (type != null)
 				{
-					metadataObject.ExtensionSchemas.Add(new ExtensionSchema(schema.Name, schema.Value["name"].ToString(), type));
+					string typeString = type.ToString();
+					if (typeString == "visualization")
+					{
+						metadataObject.ExtensionSchemas.Add(new ExtensionSchema(schema.Name, schema.Value["name"].ToString(), typeString));
+					}
 				}
 			}
 		}
