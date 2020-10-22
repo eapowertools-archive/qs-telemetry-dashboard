@@ -91,7 +91,15 @@ namespace qs_telemetry_dashboard
 			Logger.Log("Current working directory: " + FileLocationManager.WorkingDirectory, LogLevel.Debug);
 
 			// Get certificates and set up QRS Requester
-			_qrsInstance = new QlikRepositoryRequester(CertificateConfigHelpers.Hostname, CertificateConfigHelpers.Certificate);
+			try
+			{
+				_qrsInstance = new QlikRepositoryRequester(CertificateConfigHelpers.Hostname, CertificateConfigHelpers.Certificate);
+			}
+			catch (UnauthorizedAccessException e)
+			{
+				Logger.Log("Failed to get certificates and host.cfg file. This is probably because the executable is not being run either as an administrator or in an administrator command prompt.", LogLevel.Error);
+				return 1;
+			}
 
 			// Main 
 
@@ -112,12 +120,19 @@ namespace qs_telemetry_dashboard
 				}
 				else
 				{
-					Logger.Log(responseIsRunning.Item2.ToString() + " returned. Failed to get valid response from Qlik Sense Repository.", LogLevel.Error);
+					Logger.Log(responseIsRunning.Item2.ToString() + " returned. Failed to get valid response from Qlik Sense Repository. Either the service is not running or the Telemetry Dashboard cannot connect.", LogLevel.Error);
 					return 1;
 				}
 			}
 			else if (ArgsManager.InitializeRun)
 			{
+				Tuple<bool, HttpStatusCode> responseIsRunning = _qrsInstance.IsRepositoryRunning();
+				if (!responseIsRunning.Item1)
+				{
+					Logger.Log("Failed to connect to Qlik Sense Repository Service. Either it is not running, or the telemetry dashboard cannot reach it.", LogLevel.Error);
+					return 1;
+				}
+
 				Logger.Log("Preparing to run initialize mode, this will create two tasks, import an application and create two data connections in your environment, press 'q' to quit or any other key to proceed:", LogLevel.Info);
 
 				ConsoleKeyInfo keyPressed = Console.ReadKey();
@@ -131,6 +146,13 @@ namespace qs_telemetry_dashboard
 			}
 			else if (ArgsManager.FetchMetadataRun)
 			{
+				Tuple<bool, HttpStatusCode> responseIsRunning = _qrsInstance.IsRepositoryRunning();
+				if (!responseIsRunning.Item1)
+				{
+					Logger.Log("Failed to connect to Qlik Sense Repository Service. Either it is not running, or the telemetry dashboard cannot reach it.", LogLevel.Error);
+					return 1;
+				}
+
 				Logger.Log("Fetch Metadata Mode:", LogLevel.Info);
 
 				if (ArgsManager.TaskTriggered)
