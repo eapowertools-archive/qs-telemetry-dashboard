@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Management;
 using System.Net;
 using System.Net.Http;
 using System.Text;
@@ -16,8 +17,6 @@ namespace qs_telemetry_dashboard.Initialize
 		{
 			TelemetryDashboardMain.Logger.Log("Running in initialize mode.", LogLevel.Info);
 
-			// get location to copy exe to
-			//todo don't copy if already running in share folder
 			string telemetrySharePath = FileLocationManager.GetTelemetrySharePath();
 			string telemetryExePath = Path.Combine(telemetrySharePath, FileLocationManager.TELEMETRY_EXE_FILE_NAME);
 
@@ -25,14 +24,20 @@ namespace qs_telemetry_dashboard.Initialize
 			TelemetryDashboardMain.Logger.Log("Share folder TelemetryDashboard.exe path: " + telemetryExePath, LogLevel.Debug);
 			TelemetryDashboardMain.Logger.Log("Share folder TelemetryDashboard.exe root path: " + telemetrySharePath, LogLevel.Debug);
 
-			//todo fix this if condition
-			if (telemetryExePath != FileLocationManager.WorkingTelemetryDashboardExePath)
+			string telemetryExeNonUNCPath = FileLocationManager.GetPath(telemetryExePath);
+			TelemetryDashboardMain.Logger.Log("GetPath() for telemetryExePath: " + telemetryExeNonUNCPath, LogLevel.Debug);
+
+			if (telemetryExeNonUNCPath != FileLocationManager.WorkingTelemetryDashboardExePath)
 			{
+				TelemetryDashboardMain.Logger.Log("Not running executable in Telemetry Folder, will copy file.", LogLevel.Debug);
+
 				bool doCopy = true;
 				if (File.Exists(telemetryExePath))
 				{
 					try
 					{
+						TelemetryDashboardMain.Logger.Log("Old TelemetryDashboard.exe file found. Deleting.", LogLevel.Debug);
+
 						File.Delete(telemetryExePath);
 					}
 					catch (UnauthorizedAccessException)
@@ -48,6 +53,7 @@ namespace qs_telemetry_dashboard.Initialize
 						Directory.CreateDirectory(telemetrySharePath);
 
 					}
+					TelemetryDashboardMain.Logger.Log("Copying TelemetryDashboard.exe.", LogLevel.Debug);
 					File.Copy(FileLocationManager.WorkingTelemetryDashboardExePath, telemetryExePath);
 				}
 			}
