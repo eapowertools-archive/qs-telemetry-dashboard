@@ -227,7 +227,7 @@ namespace qs_telemetry_dashboard.Initialize
 				string body = @"
 			{
 				'path': '" + telemetryDashboardPath.Replace("\\", "\\\\") + @"',
-				'parameters': '-fetchmetadata',
+				'parameters': '-fetchmetadata -tasktriggered',
 				'name': 'TelemetryDashboard-1-Generate-Metadata',
 				'taskType': 1,
 				'enabled': true,

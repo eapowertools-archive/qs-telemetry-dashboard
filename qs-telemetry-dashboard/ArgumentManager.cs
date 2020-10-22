@@ -8,7 +8,7 @@ namespace qs_telemetry_dashboard
 	internal class ArgumentManager
 	{
 		internal bool NoArgs { get; }
-		internal bool Interactive { get; }
+		internal bool TaskTriggered { get; }
 		internal bool DebugLog { get; }
 		internal bool TestRun { get; }
 		internal bool InitializeRun { get; }
@@ -20,12 +20,12 @@ namespace qs_telemetry_dashboard
 Arguments:
 -debug				activate debug logging
 -initialize			initialize the environment with app, tasks and data connections
--fetchmetadata		generated metadata files to Telemetry Dashboard output folder (must be run with -interactive unless running from batch file)
+-fetchmetadata		generated metadata files to Telemetry Dashboard output folder
 -test				test to make sure certificates are in place and the QRS is running";
 
 		public ArgumentManager(string[] args, bool isComandLineRun)
 		{
-			Interactive = true;
+			TaskTriggered = false;
 			NoArgs = false;
 			DebugLog = false;
 			TestRun = false;
@@ -40,7 +40,6 @@ Arguments:
 				}
 				else
 				{
-					Interactive = true;
 					InitializeRun = true;
 				}
 			}
@@ -76,13 +75,12 @@ Arguments:
 				{
 					argDic.Remove("-fetchmetadata");
 					FetchMetadataRun = true;
-					Interactive = false;
 				}
 
-				if (argDic.TryGetValue("-interactive", out argValue))
+				if (argDic.TryGetValue("-tasktriggered", out argValue))
 				{
-					argDic.Remove("-interactive");
-					Interactive = true;
+					argDic.Remove("-tasktriggered");
+					TaskTriggered = true;
 				}
 
 				if (argDic.TryGetValue("-debug", out argValue))

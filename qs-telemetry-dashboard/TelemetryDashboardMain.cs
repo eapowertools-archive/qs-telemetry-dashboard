@@ -62,11 +62,11 @@ namespace qs_telemetry_dashboard
 				return 1;
 			}
 
-			LogLocation location = LogLocation.File;
+			LogLocation location = LogLocation.FileAndConsole;
 			LogLevel level = LogLevel.Info;
-			if (ArgsManager.Interactive)
+			if (ArgsManager.TaskTriggered)
 			{
-				location = LogLocation.FileAndConsole;
+				location = LogLocation.File;
 			}
 			if (ArgsManager.DebugLog)
 			{
@@ -133,13 +133,13 @@ namespace qs_telemetry_dashboard
 			{
 				Logger.Log("Fetch Metadata Mode:", LogLevel.Info);
 
-				if (ArgsManager.Interactive)
+				if (ArgsManager.TaskTriggered)
 				{
-					Logger.Log("Running Fetch Metadata in interactive mode.", LogLevel.Debug);
+					Logger.Log("Running Fetch Metadata from external program task.", LogLevel.Debug);
 				}
 				else
 				{
-					Logger.Log("Running Fetch Metadata in non-interactive mode.", LogLevel.Debug);
+					Logger.Log("Running Fetch Metadata from command line.", LogLevel.Debug);
 				}
 
 				// fetch metadata and wriet to csv
