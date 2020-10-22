@@ -44,6 +44,7 @@ namespace qs_telemetry_dashboard.MetadataFetch
 
 			newMetadata = new TelemetryMetadata(true);
 
+			GetRepositoryExtensions(newMetadata);
 			GetRepositoryExtensionSchemas(newMetadata);
 			GetRepositoryEngineInfos(newMetadata);
 			GetRepositoryUsers(newMetadata);
@@ -62,6 +63,40 @@ namespace qs_telemetry_dashboard.MetadataFetch
 			MetadataWriter.WriteMetadataToFile(newMetadata);
 
 			return 0;
+		}
+
+		private static void GetRepositoryExtensions(TelemetryMetadata metadataObject)
+		{
+			string extensionBody = @"
+				{
+					'columns':
+						[{
+							'columnType': 'Property',
+							'definition': 'id',
+							'name': 'id'
+						},
+						{
+							'columnType': 'Property',
+							'definition': 'createdDate',
+							'name': 'createdDate'
+						},
+						{
+							'columnType': 'Property',
+							'definition': 'name',
+							'name': 'name'
+						},
+						{
+							'columnType': 'Property',
+							'definition': 'owner.id',
+							'name': 'owner.id'
+						}],
+						'entity': 'Extension'
+				}";
+
+
+			Action<JArray> addAction = (extension) => metadataObject.Extensions.Add(new Extension(extension[0].ToObject<Guid>(), extension[1].ToObject<DateTime>(), extension[2].ToString(), extension[3].ToObject<Guid>()));
+
+			GetRepositoryPagedObjects("extension", extensionBody, addAction);
 		}
 
 		private static void GetRepositoryExtensionSchemas(TelemetryMetadata metadataObject)

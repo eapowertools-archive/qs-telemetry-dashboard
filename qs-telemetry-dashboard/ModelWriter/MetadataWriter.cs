@@ -16,6 +16,7 @@ namespace qs_telemetry_dashboard.ModelWriter
 		internal static string[] HEADERS_USERS = new string[] { "ID", "UserId", "UserDirectory", "Username" };
 		internal static string[] HEADERS_ENGINEINFOS = new string[] { "Hostname", "Key", "Value" };
 		internal static string[] HEADERS_EXTENSIONSCHEMAS = new string[] { "ID", "Name", "Type" };
+		internal static string[] HEADERS_EXTENSIONS = new string[] { "ID", "CreatedDate", "Name", "OwnerID" };
 
 		internal static void WriteMetadataToFile(TelemetryMetadata meta)
 		{
@@ -26,10 +27,32 @@ namespace qs_telemetry_dashboard.ModelWriter
 				Directory.CreateDirectory(outputDir);
 			}
 
+			WriteExtensionsMetadataFile(meta);
 			WriteExtensionSchemasMetadataFile(meta);
 			WriteEngineInfosMetadataFile(meta);
 			WriteUsersMetadataFile(meta);
 			WriteAppsMetadataFiles(meta);
+		}
+
+		private static void WriteExtensionsMetadataFile(TelemetryMetadata meta)
+		{
+			StringBuilder sb = new StringBuilder();
+
+			WriteHeaders(sb, HEADERS_EXTENSIONS);
+
+			foreach (Extension extension in meta.Extensions)
+			{
+				sb.Append(extension.ID.ToString());
+				sb.Append(CSV_SEPARATOR);
+				sb.Append(extension.CreatedDate.ToString("O"));
+				sb.Append(CSV_SEPARATOR);
+				sb.Append(extension.Name);
+				sb.Append(CSV_SEPARATOR);
+				sb.Append(extension.OwnerID.ToString());
+				sb.Append('\n');
+			}
+
+			WriteFile(sb, Path.Combine(FileLocationManager.GetTelemetrySharePath(), FileLocationManager.TELEMETRY_OUTPUT_FOLDER_NAME, FileLocationManager.METADATA_EXTENSIONS_FILE_NAME));
 		}
 
 		private static void WriteExtensionSchemasMetadataFile(TelemetryMetadata meta)
