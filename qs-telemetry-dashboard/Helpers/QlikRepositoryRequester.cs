@@ -3,6 +3,7 @@ using qs_telemetry_dashboard.Models;
 using System;
 using System.Net;
 using System.Net.Http;
+using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 
@@ -26,7 +27,7 @@ namespace qs_telemetry_dashboard.Helpers
 
 		}
 
-		internal Tuple<HttpStatusCode, string> MakeRequest(string path, HttpMethod method, HTTPContentType contentType = HTTPContentType.json, byte[] body = null)
+		internal Tuple<HttpStatusCode, string> MakeRequest(string path, HttpMethod method, HTTPContentType contentType = HTTPContentType.json, byte[] body = null, bool isQRS = true, string port = "4242")
 		{
 			// Fix Path
 			if (!path.StartsWith("/"))
@@ -56,10 +57,20 @@ namespace qs_telemetry_dashboard.Helpers
 			ServicePointManager.SecurityProtocol |= SecurityProtocolType.Tls12 | SecurityProtocolType.Tls11;
 
 			HttpRequestMessage req = new HttpRequestMessage();
-			req.RequestUri = new Uri(@"https://" + _hostname + ":4242/qrs" + path + "xrfkey=" + xrfkey);
+			if (isQRS)
+			{
+				req.RequestUri = new Uri(@"https://" + _hostname + ":4242/qrs" + path + "xrfkey=" + xrfkey);
+			}
+			else
+			{
+				req.RequestUri = new Uri(@"https://" + _hostname + ":" + port + path);
+			}
 			req.Method = method;
-			req.Headers.Add("X-Qlik-xrfkey", xrfkey);
-			req.Headers.Add("X-Qlik-User", @"UserDirectory=internal;UserId=sa_api");
+			if (isQRS)
+			{
+				req.Headers.Add("X-Qlik-xrfkey", xrfkey);
+				req.Headers.Add("X-Qlik-User", @"UserDirectory=internal;UserId=sa_api");
+			}
 
 			WebRequestHandler handler = new WebRequestHandler();
 			handler.ClientCertificates.Add(_certificate);

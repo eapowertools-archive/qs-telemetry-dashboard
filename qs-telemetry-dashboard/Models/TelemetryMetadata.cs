@@ -14,6 +14,12 @@ namespace qs_telemetry_dashboard.Models
 		internal IDictionary<Guid, QRSApp> Apps { get; set; }
 
 		[field: NonSerialized()]
+		internal string Version { get; set; }
+
+		[field: NonSerialized()]
+		internal string ReleaseLabel { get; set; }
+
+		[field: NonSerialized()]
 		internal IList<EngineInfo> EngineInfos { get; set; }
 
 		[field: NonSerialized()]
@@ -33,6 +39,8 @@ namespace qs_telemetry_dashboard.Models
 			}
 			this.Apps = new Dictionary<Guid, QRSApp>();
 
+			this.Version = "";
+			this.ReleaseLabel = "";
 			this.EngineInfos = new List<EngineInfo>();
 			this.Users = new List<User>();
 			this.ExtensionSchemas = new List<ExtensionSchema>();
