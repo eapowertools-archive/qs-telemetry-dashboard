@@ -95,7 +95,7 @@ namespace qs_telemetry_dashboard
 			{
 				_qrsInstance = new QlikRepositoryRequester(CertificateConfigHelpers.Hostname, CertificateConfigHelpers.Certificate);
 			}
-			catch (UnauthorizedAccessException e)
+			catch (UnauthorizedAccessException)
 			{
 				Logger.Log("Failed to get certificates and host.cfg file. This is probably because the executable is not being run either as an administrator or in an administrator command prompt.", LogLevel.Error);
 				return 1;
