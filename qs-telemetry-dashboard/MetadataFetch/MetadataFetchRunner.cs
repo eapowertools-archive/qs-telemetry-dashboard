@@ -408,27 +408,41 @@ namespace qs_telemetry_dashboard.MetadataFetch
 			// Defining the location as a direct connection to Qlik Sense Server
 			location.AsDirectConnection("INTERNAL", "sa_api", certificateCollection: certificateCollection);
 
+			int totalApps = metadata.Apps.Count;
+			int currentApp = 0;
+
+			TelemetryDashboardMain.Logger.Log("Will start to fetch all app objects from the engine.", LogLevel.Info);
+
 			foreach (KeyValuePair<Guid, QRSApp> appTuple in metadata.Apps)
 			{
-				TelemetryDashboardMain.Logger.Log(string.Format("Checking to see if visualaizations fetch is needed for app '{0}' with ID '{1}' ", appTuple.Value.Name, appTuple.Key.ToString()), LogLevel.Debug);
+				currentApp++;
+				TelemetryDashboardMain.Logger.Log(string.Format("App {0} of {1} - Checking to see if visualaizations fetch is needed for app '{2}' with ID '{3}' ", currentApp, totalApps, appTuple.Value.Name, appTuple.Key.ToString()), LogLevel.Debug);
 
 				if (appTuple.Value.VisualizationUpdateNeeded)
 				{
 					TelemetryDashboardMain.Logger.Log(string.Format("Getting visualaizations for app '{0}' with ID '{1}' ", appTuple.Value.Name, appTuple.Key.ToString()), LogLevel.Info);
-					IAppIdentifier appIdentifier = new AppIdentifier() { AppId = appTuple.Key.ToString() };
-					using (IApp app = location.App(appIdentifier, null, true))
+					try
 					{
-						IEnumerable<ISheet> sheetList = app.GetSheets();
-						foreach(ISheet sheet in sheetList)
+						IAppIdentifier appIdentifier = new AppIdentifier() { AppId = appTuple.Key.ToString() };
+						using (IApp app = location.App(appIdentifier, null, true))
 						{
-							ISheetLayout sheetObject = (SheetLayout)sheet.GetLayout();
-							IList<Visualization> vizs = new List<Visualization>();
-							sheetObject.Cells.ToList().ForEach(c => vizs.Add(new Visualization(c.Name, c.Type)));							
-							metadata.Apps[appTuple.Key].Sheets.FirstOrDefault(s => s.Value.EngineObjectID == sheetObject.Info.Id).Value.SetSheetsList(vizs);
+							IEnumerable<ISheet> sheetList = app.GetSheets();
+							foreach (ISheet sheet in sheetList)
+							{
+								ISheetLayout sheetObject = (SheetLayout)sheet.GetLayout();
+								IList<Visualization> vizs = new List<Visualization>();
+								sheetObject.Cells.ToList().ForEach(c => vizs.Add(new Visualization(c.Name, c.Type)));
+								metadata.Apps[appTuple.Key].Sheets.FirstOrDefault(s => s.Value.EngineObjectID == sheetObject.Info.Id).Value.SetSheetsList(vizs);
+							}
 						}
+					}
+					catch (Exception e)
+					{
+						TelemetryDashboardMain.Logger.Log("Failed to get engine objects from App: " + appTuple.Key.ToString() + ". Message: " + e.Message, LogLevel.Error);
 					}
 				}
 			}
+			TelemetryDashboardMain.Logger.Log("Done getting all app objects from the engine.", LogLevel.Info);
 		}
 
 		private static int GetRepositoryObjectsCount(string type)
