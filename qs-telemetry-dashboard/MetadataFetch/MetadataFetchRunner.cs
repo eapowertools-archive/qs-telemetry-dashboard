@@ -439,6 +439,7 @@ namespace qs_telemetry_dashboard.MetadataFetch
 					catch (Exception e)
 					{
 						TelemetryDashboardMain.Logger.Log("Failed to get engine objects from App: " + appTuple.Key.ToString() + ". Message: " + e.Message, LogLevel.Error);
+						TelemetryDashboardMain.Logger.Log("Skipping app: " + appTuple.Key.ToString(), LogLevel.Error);
 					}
 				}
 			}
