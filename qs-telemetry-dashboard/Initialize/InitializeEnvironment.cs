@@ -242,41 +242,49 @@ namespace qs_telemetry_dashboard.Initialize
 			{
 				throw new InvalidResponseException(hasExternalTask.Item1.ToString() + " returned when trying to get 'TelemetryDashboard-1-Generate-Metadata' external task. Request failed.");
 			}
-			if (JObject.Parse(hasExternalTask.Item2)["value"].ToObject<int>() == 0)
-			{
-				TelemetryDashboardMain.Logger.Log("No 'TelemetryDashboard-1-Generate-Metadata' was found. Creating new task.", LogLevel.Info);
-
-				string body = @"
-			{
-				'path': 'cmd.exe',
-				'parameters': '/C """ + telemetryDashboardPath.Replace("\\", "\\\\") + @""" -fetchmetadata -tasktriggered',
-				'name': 'TelemetryDashboard-1-Generate-Metadata',
-				'taskType': 1,
-				'enabled': true,
-				'taskSessionTimeout': 1440,
-				'maxRetries': 0,
-				'impactSecurityAccess': false,
-				'schemaPath': 'ExternalProgramTask'
-			}";
-				Tuple<HttpStatusCode, string> createExternalTask = TelemetryDashboardMain.QRSRequest.MakeRequest("/externalprogramtask", HttpMethod.Post, HTTPContentType.json, Encoding.UTF8.GetBytes(body));
-				if (createExternalTask.Item1 != HttpStatusCode.Created)
-				{
-					throw new InvalidResponseException(createExternalTask.Item1.ToString() + " returned when trying to create 'TelemetryDashboard-1-Generate-Metadata' external task. Request failed.");
-				}
-				else
-				{
-					TelemetryDashboardMain.Logger.Log("Task 'TelemetryDashboard-1-Generate-Metadata' was created.", LogLevel.Info);
-					externalTaskID = JObject.Parse(createExternalTask.Item2)["id"].ToString();
-					TelemetryDashboardMain.Logger.Log("Task 'TelemetryDashboard-1-Generate-Metadata' ID is: " + externalTaskID, LogLevel.Debug);
-
-				}
-			}
-			else
+			if (JObject.Parse(hasExternalTask.Item2)["value"].ToObject<int>() > 0)
 			{
 				TelemetryDashboardMain.Logger.Log("Existing 'TelemetryDashboard-1-Generate-Metadata' was found.", LogLevel.Info);
 				Tuple<HttpStatusCode, string> getExternalTaskId = TelemetryDashboardMain.QRSRequest.MakeRequest("/externalprogramtask?filter=name eq 'TelemetryDashboard-1-Generate-Metadata'", HttpMethod.Get);
-				externalTaskID = JArray.Parse(getExternalTaskId.Item2)[0]["id"].ToString();
+				JArray externalProgramTasks = JArray.Parse(getExternalTaskId.Item2);
+
+				foreach (JToken ept in externalProgramTasks)
+				{
+					externalTaskID = ept["id"].ToString();
+					TelemetryDashboardMain.Logger.Log("Deleting existing 'TelemetryDashboard-1-Generate-Metadata' with ID: " + externalTaskID, LogLevel.Info);
+					Tuple<HttpStatusCode, string> deletedExternalTask = TelemetryDashboardMain.QRSRequest.MakeRequest("/externalprogramtask/" + externalTaskID, HttpMethod.Delete);
+				}
+				TelemetryDashboardMain.Logger.Log("Now 'TelemetryDashboard-1-Generate-Metadata' task will be created.", LogLevel.Info);
+
+			}
+			else
+			{
+				TelemetryDashboardMain.Logger.Log("No 'TelemetryDashboard-1-Generate-Metadata' was found. Creating new task.", LogLevel.Info);
+			}
+
+			string externalbody = @"
+		{
+			'path': 'cmd.exe',
+			'parameters': '/C """ + telemetryDashboardPath.Replace("\\", "\\\\") + @""" -fetchmetadata -tasktriggered',
+			'name': 'TelemetryDashboard-1-Generate-Metadata',
+			'taskType': 1,
+			'enabled': true,
+			'taskSessionTimeout': 1440,
+			'maxRetries': 0,
+			'impactSecurityAccess': false,
+			'schemaPath': 'ExternalProgramTask'
+		}";
+			Tuple<HttpStatusCode, string> createExternalTask = TelemetryDashboardMain.QRSRequest.MakeRequest("/externalprogramtask", HttpMethod.Post, HTTPContentType.json, Encoding.UTF8.GetBytes(externalbody));
+			if (createExternalTask.Item1 != HttpStatusCode.Created)
+			{
+				throw new InvalidResponseException(createExternalTask.Item1.ToString() + " returned when trying to create 'TelemetryDashboard-1-Generate-Metadata' external task. Request failed.");
+			}
+			else
+			{
+				TelemetryDashboardMain.Logger.Log("Task 'TelemetryDashboard-1-Generate-Metadata' was created.", LogLevel.Info);
+				externalTaskID = JObject.Parse(createExternalTask.Item2)["id"].ToString();
 				TelemetryDashboardMain.Logger.Log("Task 'TelemetryDashboard-1-Generate-Metadata' ID is: " + externalTaskID, LogLevel.Debug);
+
 			}
 
 			// Reload Task
