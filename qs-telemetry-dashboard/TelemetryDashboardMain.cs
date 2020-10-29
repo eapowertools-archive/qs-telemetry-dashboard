@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel.Design;
 using System.Net;
 using System.Reflection;
 using System.Runtime.InteropServices;
@@ -146,6 +147,10 @@ namespace qs_telemetry_dashboard
 				if (serviceAccount.EndsWith("'"))
 				{
 					serviceAccount = serviceAccount.Substring(0, serviceAccount.Length - 1);
+				}
+				if (serviceAccount.StartsWith(".\\"))
+				{
+					serviceAccount = Environment.MachineName + "\\" + serviceAccount.Substring(2);
 				}
 				Logger.Log("The user '" + serviceAccount + "' was entered.", LogLevel.Info);
 
