@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using qs_telemetry_dashboard.Helpers;
+using qs_telemetry_dashboard.Logging;
 using qs_telemetry_dashboard.Models;
 
 namespace qs_telemetry_dashboard.ModelWriter
@@ -19,21 +20,62 @@ namespace qs_telemetry_dashboard.ModelWriter
 		internal static string[] HEADERS_EXTENSIONS = new string[] { "ID", "CreatedDate", "Name", "OwnerID", "DashboardBundle", "VisualizationBundle" };
 		internal static string[] HEADERS_SYSTEMINFO = new string[] { "version", "ReleaseLabel" };
 
+		internal static void DeleteMetadataFiles()
+		{
+			TelemetryDashboardMain.Logger.Log("Deleting old metadata files.", LogLevel.Info);
+
+			try
+			{
+				string outputDir = Path.Combine(FileLocationManager.GetTelemetrySharePath(), FileLocationManager.TELEMETRY_OUTPUT_FOLDER_NAME);
+				if (Directory.Exists(outputDir))
+				{
+					DirectoryInfo di = new DirectoryInfo(outputDir);
+
+					foreach (FileInfo file in di.GetFiles())
+					{
+						TelemetryDashboardMain.Logger.Log("Deleting: " + file.FullName, LogLevel.Debug);
+
+						file.Delete();
+					}
+				}
+			}
+			catch (Exception e)
+			{
+				TelemetryDashboardMain.Logger.Log("Error deleting file. Message: " + e.Message, LogLevel.Error);
+
+			}
+		}
 
 		internal static void WriteMetadataToFile(TelemetryMetadata meta)
 		{
+			TelemetryDashboardMain.Logger.Log("Writing metadata files to disk.", LogLevel.Info);
+
 			// check to see if folder exists
+			TelemetryDashboardMain.Logger.Log("Checking to see if output dir exists.", LogLevel.Debug);
 			string outputDir = Path.Combine(FileLocationManager.GetTelemetrySharePath(), FileLocationManager.TELEMETRY_OUTPUT_FOLDER_NAME);
 			if (!Directory.Exists(outputDir))
 			{
+				TelemetryDashboardMain.Logger.Log("Output dir didn't exist. Creating.", LogLevel.Debug);
+
 				Directory.CreateDirectory(outputDir);
 			}
 
+			TelemetryDashboardMain.Logger.Log("Writing System Info file to disk.", LogLevel.Info);
 			WriteSystemInfoFile(meta);
+
+			TelemetryDashboardMain.Logger.Log("Writing Extensions file to disk.", LogLevel.Info);
 			WriteExtensionsMetadataFile(meta);
+
+			TelemetryDashboardMain.Logger.Log("Writing Extension Schemas file to disk.", LogLevel.Info);
 			WriteExtensionSchemasMetadataFile(meta);
+
+			TelemetryDashboardMain.Logger.Log("Writing Engine Infos file to disk.", LogLevel.Info);
 			WriteEngineInfosMetadataFile(meta);
+
+			TelemetryDashboardMain.Logger.Log("Writing User file to disk.", LogLevel.Info);
 			WriteUsersMetadataFile(meta);
+
+			TelemetryDashboardMain.Logger.Log("Writing all App metadata files to disk.", LogLevel.Info);
 			WriteAppsMetadataFiles(meta);
 		}
 
@@ -211,7 +253,7 @@ namespace qs_telemetry_dashboard.ModelWriter
 					sheetsSB.Append(sheet.Value.Approved);
 					sheetsSB.Append('\n');
 
-					foreach(Visualization viz in sheet.Value.Visualizations)
+					foreach (Visualization viz in sheet.Value.Visualizations)
 					{
 						visualizationsSB.Append(app.Key.ToString() + '|' + sheet.Value.EngineObjectID);
 						visualizationsSB.Append(CSV_SEPARATOR);
