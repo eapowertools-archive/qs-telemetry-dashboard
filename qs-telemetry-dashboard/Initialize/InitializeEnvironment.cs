@@ -3,6 +3,7 @@ using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Security.AccessControl;
+using System.Security.Principal;
 using System.Text;
 using Newtonsoft.Json.Linq;
 using qs_telemetry_dashboard.Exceptions;
@@ -13,7 +14,7 @@ namespace qs_telemetry_dashboard.Initialize
 {
 	internal class InitializeEnvironment
 	{
-		internal static int Run()
+		internal static int Run(string serviceAccount)
 		{
 			TelemetryDashboardMain.Logger.Log("Running in initialize mode.", LogLevel.Info);
 
@@ -56,25 +57,26 @@ namespace qs_telemetry_dashboard.Initialize
 					TelemetryDashboardMain.Logger.Log("Copying TelemetryDashboard.exe.", LogLevel.Debug);
 					File.Copy(FileLocationManager.WorkingTelemetryDashboardExePath, telemetryExePath);
 
-					// Change Permissions to allow service account:
-					string serviceAccount = "qliktest\\qservice";
+					try
+					{
+						// Change Permissions to allow service account:
+						DirectoryInfo dInfo = new DirectoryInfo(telemetrySharePath);
+						FileInfo fInfo = new FileInfo(telemetryExePath);
 
-					// Create a new DirectoryInfo object.
-					DirectoryInfo dInfo = new DirectoryInfo(telemetrySharePath);
-					FileInfo fInfo = new FileInfo(telemetryExePath);
+						DirectorySecurity dSecurity = dInfo.GetAccessControl();
+						FileSecurity fSecurity = fInfo.GetAccessControl();
 
-					// Get a DirectorySecurity object that represents the
-					// current security settings.
-					DirectorySecurity dSecurity = dInfo.GetAccessControl();
-					FileSecurity fSecurity = fInfo.GetAccessControl();
+						dSecurity.AddAccessRule(new FileSystemAccessRule(serviceAccount, FileSystemRights.FullControl, AccessControlType.Allow));
+						fSecurity.AddAccessRule(new FileSystemAccessRule(serviceAccount, FileSystemRights.FullControl, AccessControlType.Allow));
 
-					// Add the FileSystemAccessRule to the security settings.
-					dSecurity.AddAccessRule(new FileSystemAccessRule(serviceAccount, FileSystemRights.FullControl, AccessControlType.Allow));
-					fSecurity.AddAccessRule(new FileSystemAccessRule(serviceAccount, FileSystemRights.FullControl, AccessControlType.Allow));
-
-					// Set the new access settings.
-					dInfo.SetAccessControl(dSecurity);
-					fInfo.SetAccessControl(fSecurity);
+						dInfo.SetAccessControl(dSecurity);
+						fInfo.SetAccessControl(fSecurity);
+					}
+					catch (IdentityNotMappedException)
+					{
+						TelemetryDashboardMain.Logger.Log("Invalid service account '"+serviceAccount+"' was entered. Initialize failed to complete.", LogLevel.Error);
+						return 1;
+					}
 				}
 			}
 
@@ -240,41 +242,49 @@ namespace qs_telemetry_dashboard.Initialize
 			{
 				throw new InvalidResponseException(hasExternalTask.Item1.ToString() + " returned when trying to get 'TelemetryDashboard-1-Generate-Metadata' external task. Request failed.");
 			}
-			if (JObject.Parse(hasExternalTask.Item2)["value"].ToObject<int>() == 0)
-			{
-				TelemetryDashboardMain.Logger.Log("No 'TelemetryDashboard-1-Generate-Metadata' was found. Creating new task.", LogLevel.Info);
-
-				string body = @"
-			{
-				'path': 'cmd.exe',
-				'parameters': '/C """ + telemetryDashboardPath.Replace("\\", "\\\\") + @""" -fetchmetadata -tasktriggered',
-				'name': 'TelemetryDashboard-1-Generate-Metadata',
-				'taskType': 1,
-				'enabled': true,
-				'taskSessionTimeout': 1440,
-				'maxRetries': 0,
-				'impactSecurityAccess': false,
-				'schemaPath': 'ExternalProgramTask'
-			}";
-				Tuple<HttpStatusCode, string> createExternalTask = TelemetryDashboardMain.QRSRequest.MakeRequest("/externalprogramtask", HttpMethod.Post, HTTPContentType.json, Encoding.UTF8.GetBytes(body));
-				if (createExternalTask.Item1 != HttpStatusCode.Created)
-				{
-					throw new InvalidResponseException(createExternalTask.Item1.ToString() + " returned when trying to create 'TelemetryDashboard-1-Generate-Metadata' external task. Request failed.");
-				}
-				else
-				{
-					TelemetryDashboardMain.Logger.Log("Task 'TelemetryDashboard-1-Generate-Metadata' was created.", LogLevel.Info);
-					externalTaskID = JObject.Parse(createExternalTask.Item2)["id"].ToString();
-					TelemetryDashboardMain.Logger.Log("Task 'TelemetryDashboard-1-Generate-Metadata' ID is: " + externalTaskID, LogLevel.Debug);
-
-				}
-			}
-			else
+			if (JObject.Parse(hasExternalTask.Item2)["value"].ToObject<int>() > 0)
 			{
 				TelemetryDashboardMain.Logger.Log("Existing 'TelemetryDashboard-1-Generate-Metadata' was found.", LogLevel.Info);
 				Tuple<HttpStatusCode, string> getExternalTaskId = TelemetryDashboardMain.QRSRequest.MakeRequest("/externalprogramtask?filter=name eq 'TelemetryDashboard-1-Generate-Metadata'", HttpMethod.Get);
-				externalTaskID = JArray.Parse(getExternalTaskId.Item2)[0]["id"].ToString();
+				JArray externalProgramTasks = JArray.Parse(getExternalTaskId.Item2);
+
+				foreach (JToken ept in externalProgramTasks)
+				{
+					externalTaskID = ept["id"].ToString();
+					TelemetryDashboardMain.Logger.Log("Deleting existing 'TelemetryDashboard-1-Generate-Metadata' with ID: " + externalTaskID, LogLevel.Info);
+					Tuple<HttpStatusCode, string> deletedExternalTask = TelemetryDashboardMain.QRSRequest.MakeRequest("/externalprogramtask/" + externalTaskID, HttpMethod.Delete);
+				}
+				TelemetryDashboardMain.Logger.Log("Now 'TelemetryDashboard-1-Generate-Metadata' task will be created.", LogLevel.Info);
+
+			}
+			else
+			{
+				TelemetryDashboardMain.Logger.Log("No 'TelemetryDashboard-1-Generate-Metadata' was found. Creating new task.", LogLevel.Info);
+			}
+
+			string externalbody = @"
+		{
+			'path': 'cmd.exe',
+			'parameters': '/C """ + telemetryDashboardPath.Replace("\\", "\\\\") + @""" -fetchmetadata -tasktriggered',
+			'name': 'TelemetryDashboard-1-Generate-Metadata',
+			'taskType': 1,
+			'enabled': true,
+			'taskSessionTimeout': 1440,
+			'maxRetries': 0,
+			'impactSecurityAccess': false,
+			'schemaPath': 'ExternalProgramTask'
+		}";
+			Tuple<HttpStatusCode, string> createExternalTask = TelemetryDashboardMain.QRSRequest.MakeRequest("/externalprogramtask", HttpMethod.Post, HTTPContentType.json, Encoding.UTF8.GetBytes(externalbody));
+			if (createExternalTask.Item1 != HttpStatusCode.Created)
+			{
+				throw new InvalidResponseException(createExternalTask.Item1.ToString() + " returned when trying to create 'TelemetryDashboard-1-Generate-Metadata' external task. Request failed.");
+			}
+			else
+			{
+				TelemetryDashboardMain.Logger.Log("Task 'TelemetryDashboard-1-Generate-Metadata' was created.", LogLevel.Info);
+				externalTaskID = JObject.Parse(createExternalTask.Item2)["id"].ToString();
 				TelemetryDashboardMain.Logger.Log("Task 'TelemetryDashboard-1-Generate-Metadata' ID is: " + externalTaskID, LogLevel.Debug);
+
 			}
 
 			// Reload Task
