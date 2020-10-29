@@ -61,6 +61,7 @@ namespace qs_telemetry_dashboard.MetadataFetch
 			serializer.Serialize(SaveFileStream, newMetadata);
 			SaveFileStream.Close();
 
+			MetadataWriter.DeleteMetadataFiles();
 			MetadataWriter.WriteMetadataToFile(newMetadata);
 
 			return 0;
@@ -465,7 +466,7 @@ namespace qs_telemetry_dashboard.MetadataFetch
 			Tuple<HttpStatusCode, string> objectResponse;
 			do
 			{
-				objectResponse = TelemetryDashboardMain.QRSRequest.MakeRequest("/" +  type + "/table?skip=" + startLocation + "&take=" + PAGESIZE, HttpMethod.Post, HTTPContentType.json, Encoding.UTF8.GetBytes(body));
+				objectResponse = TelemetryDashboardMain.QRSRequest.MakeRequest("/" + type + "/table?skip=" + startLocation + "&take=" + PAGESIZE, HttpMethod.Post, HTTPContentType.json, Encoding.UTF8.GetBytes(body));
 				if (objectResponse.Item1 != HttpStatusCode.Created)
 				{
 					throw new InvalidResponseException(objectResponse.Item1.ToString() + " returned when trying to get objects of type '" + type + "'. Request failed.");

@@ -28,6 +28,8 @@ namespace qs_telemetry_dashboard.Helpers
 		internal static string METADATA_SHEETS_FILE_NAME = "sheets.csv";
 		internal static string METADATA_VISUALIZATIONS_FILE_NAME = "visualizations.csv";
 
+		private static string _telemetrySharePath;
+
 		internal static string WorkingDirectory
 		{
 			get
@@ -46,26 +48,30 @@ namespace qs_telemetry_dashboard.Helpers
 
 		internal static string GetTelemetrySharePath()
 		{
-			Tuple<HttpStatusCode, string> response = TelemetryDashboardMain.QRSRequest.MakeRequest("/servicecluster/full", HttpMethod.Get);
-			if (response.Item1 != HttpStatusCode.OK)
+			if (string.IsNullOrEmpty(_telemetrySharePath))
 			{
-				throw new InvalidResponseException(response.Item1.ToString() + " returned when getting share path. Request failed.");
+				Tuple<HttpStatusCode, string> response = TelemetryDashboardMain.QRSRequest.MakeRequest("/servicecluster/full", HttpMethod.Get);
+				if (response.Item1 != HttpStatusCode.OK)
+				{
+					throw new InvalidResponseException(response.Item1.ToString() + " returned when getting share path. Request failed.");
+				}
+
+				JArray listOfServiceClusters = JArray.Parse(response.Item2);
+
+				if (listOfServiceClusters.Count == 0)
+				{
+					throw new Exception("Tried to get service cluster information. Request returned but no data was found.");
+				}
+				else if (listOfServiceClusters.Count > 1)
+				{
+					throw new Exception("Got service cluster information. More than 1 service cluster was found.");
+				}
+
+				string shareRootPath = listOfServiceClusters[0]["settings"]["sharedPersistenceProperties"]["rootFolder"].ToString();
+
+				_telemetrySharePath = Path.Combine(shareRootPath, TELEMETRY_FOLDER_NAME);
 			}
-
-			JArray listOfServiceClusters = JArray.Parse(response.Item2);
-
-			if (listOfServiceClusters.Count == 0)
-			{
-				throw new Exception("Tried to get service cluster information. Request returned but no data was found.");
-			}
-			else if (listOfServiceClusters.Count > 1)
-			{
-				throw new Exception("Got service cluster information. More than 1 service cluster was found.");
-			}
-
-			string shareRootPath = listOfServiceClusters[0]["settings"]["sharedPersistenceProperties"]["rootFolder"].ToString();
-
-			return Path.Combine(shareRootPath, TELEMETRY_FOLDER_NAME);
+			return _telemetrySharePath;
 		}
 
 		internal static string GetPath(string uncPath)
