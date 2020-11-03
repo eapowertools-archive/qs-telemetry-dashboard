@@ -288,85 +288,84 @@ namespace qs_telemetry_dashboard.Initialize
 			}
 
 			// Reload Task
-			Tuple<HttpStatusCode, string> reloadTasks = TelemetryDashboardMain.QRSRequest.MakeRequest("/reloadtask/full?filter=name eq 'TelemetryDashboard-2-Reload-Dashboard'", HttpMethod.Get);
-			if (reloadTasks.Item1 != HttpStatusCode.OK)
+			Tuple<HttpStatusCode, string> hasReloadTasks = TelemetryDashboardMain.QRSRequest.MakeRequest("/reloadtask/count?filter=name eq 'TelemetryDashboard-2-Reload-Dashboard'", HttpMethod.Get);
+			if (hasReloadTasks.Item1 != HttpStatusCode.OK)
 			{
-				throw new InvalidResponseException(reloadTasks.Item1.ToString() + " returned when trying to get 'TelemetryDashboard-2-Reload-Dashboard' external task. Request failed.");
+				throw new InvalidResponseException(hasReloadTasks.Item1.ToString() + " returned when trying to get 'TelemetryDashboard-2-Reload-Dashboard' reload task. Request failed.");
 			}
-
-			JArray listOfTasks = JArray.Parse(reloadTasks.Item2);
-
-			if (listOfTasks.Count == 0)
+			if (JObject.Parse(hasReloadTasks.Item2)["value"].ToObject<int>() > 0)
 			{
-				TelemetryDashboardMain.Logger.Log("Existing 'TelemetryDashboard-2-Reload-Dashboard' was not found.", LogLevel.Info);
+				TelemetryDashboardMain.Logger.Log("Existing 'TelemetryDashboard-2-Reload-Dashboard' was found.", LogLevel.Info);
+				Tuple<HttpStatusCode, string> getReloadTaskId = TelemetryDashboardMain.QRSRequest.MakeRequest("/reloadtask?filter=name eq 'TelemetryDashboard-2-Reload-Dashboard'", HttpMethod.Get);
+				JArray reloadTasks = JArray.Parse(getReloadTaskId.Item2);
 
-				string body = @"
+				foreach (JToken rt in reloadTasks)
 				{
-					'compositeEvents': [
-					{
-						'compositeRules': [
-						{
-							'externalProgramTask': {
-								'id': '" + externalTaskID + @"',
-								'name': 'TelemetryDashboard-1-Generate-Metadata'
-							},
-							'ruleState': 1
-						}
-						],
-						'enabled': true,
-						'eventType': 1,
-						'name': 'telemetry-metadata-trigger',
-						'privileges': [
-							'read',
-							'update',
-							'create',
-							'delete'
-						],
-						'timeConstraint': {
-							'days': 0,
-							'hours': 0,
-							'minutes': 360,
-							'seconds': 0
-						}
-					}
-					],
-					'schemaEvents': [],
-					'task': {
-						'app': {
-							'id': '" + appId + @"',
-							'name': 'Telemetry Dashboard'
-						},
-						'customProperties': [],
-						'enabled': true,
-						'isManuallyTriggered': false,
-						'maxRetries': 0,
-						'name': 'TelemetryDashboard-2-Reload-Dashboard',
-						'tags': [],
-						'taskSessionTimeout': 1440,
-						'taskType': 0
-					}
-				}";
-
-				Tuple<HttpStatusCode, string> createTaskResponse = TelemetryDashboardMain.QRSRequest.MakeRequest("/reloadtask/create", HttpMethod.Post, HTTPContentType.json, Encoding.UTF8.GetBytes(body));
-				if (createTaskResponse.Item1 != HttpStatusCode.Created)
-				{
-					throw new InvalidResponseException(createTaskResponse.Item1.ToString() + " returned when trying to create 'TelemetryDashboard-2-Reload-Dashboard' external task. Request failed.");
+					string reloadTaskID = rt["id"].ToString();
+					TelemetryDashboardMain.Logger.Log("Deleting existing 'TelemetryDashboard-2-Reload-Dashboard' with ID: " + reloadTaskID, LogLevel.Info);
+					Tuple<HttpStatusCode, string> deletedReloadTask = TelemetryDashboardMain.QRSRequest.MakeRequest("/reloadtask/" + reloadTaskID, HttpMethod.Delete);
 				}
-				TelemetryDashboardMain.Logger.Log("Task 'TelemetryDashboard-2-Reload-Dashboard' was created.", LogLevel.Info);
+				TelemetryDashboardMain.Logger.Log("Now 'TelemetryDashboard-2-Reload-Dashboard' task will be created.", LogLevel.Info);
+
 			}
 			else
 			{
-				TelemetryDashboardMain.Logger.Log("Existing 'TelemetryDashboard-2-Reload-Dashboard' was found.", LogLevel.Info);
-				listOfTasks[0]["app"] = JObject.Parse(@"{ 'id': '" + appId + "'}");
-				listOfTasks[0]["modifiedDate"] = DateTime.UtcNow.ToString("s") + "Z";
-				string reloadTaskID = listOfTasks[0]["id"].ToString();
-				Tuple<HttpStatusCode, string> updatedTaskResponse = TelemetryDashboardMain.QRSRequest.MakeRequest("/reloadtask/" + reloadTaskID, HttpMethod.Put, HTTPContentType.json, Encoding.UTF8.GetBytes(listOfTasks[0].ToString()));
-				if (updatedTaskResponse.Item1 != HttpStatusCode.OK)
-				{
-					throw new InvalidResponseException(updatedTaskResponse.Item1.ToString() + " returned when trying to update 'TelemetryDashboard-2-Reload-Dashboard' external task. Request failed.");
-				}
-				TelemetryDashboardMain.Logger.Log("Task 'TelemetryDashboard-2-Reload-Dashboard' was updated.", LogLevel.Info);
+				TelemetryDashboardMain.Logger.Log("No 'TelemetryDashboard-2-Reload-Dashboard' was found. Creating new task.", LogLevel.Info);
 			}
+
+			string body = @"
+			{
+				'compositeEvents': [
+				{
+					'compositeRules': [
+					{
+						'externalProgramTask': {
+							'id': '" + externalTaskID + @"',
+							'name': 'TelemetryDashboard-1-Generate-Metadata'
+						},
+						'ruleState': 1
+					}
+					],
+					'enabled': true,
+					'eventType': 1,
+					'name': 'telemetry-metadata-trigger',
+					'privileges': [
+						'read',
+						'update',
+						'create',
+						'delete'
+					],
+					'timeConstraint': {
+						'days': 0,
+						'hours': 0,
+						'minutes': 360,
+						'seconds': 0
+					}
+				}
+				],
+				'schemaEvents': [],
+				'task': {
+					'app': {
+						'id': '" + appId + @"',
+						'name': 'Telemetry Dashboard'
+					},
+					'customProperties': [],
+					'enabled': true,
+					'isManuallyTriggered': false,
+					'maxRetries': 0,
+					'name': 'TelemetryDashboard-2-Reload-Dashboard',
+					'tags': [],
+					'taskSessionTimeout': 1440,
+					'taskType': 0
+				}
+			}";
+
+			Tuple<HttpStatusCode, string> createTaskResponse = TelemetryDashboardMain.QRSRequest.MakeRequest("/reloadtask/create", HttpMethod.Post, HTTPContentType.json, Encoding.UTF8.GetBytes(body));
+			if (createTaskResponse.Item1 != HttpStatusCode.Created)
+			{
+				throw new InvalidResponseException(createTaskResponse.Item1.ToString() + " returned when trying to create 'TelemetryDashboard-2-Reload-Dashboard' external task. Request failed.");
+			}
+			TelemetryDashboardMain.Logger.Log("Task 'TelemetryDashboard-2-Reload-Dashboard' was created.", LogLevel.Info);
 
 			return;
 		}
