@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
@@ -20,13 +20,15 @@ namespace qs_telemetry_dashboard.Helpers
 		{
 			get
 			{
-				if (string.IsNullOrEmpty(_hostname))
+				if (_hostname == null)
 				{
-					string hostnameBase64 = File.ReadAllText(FileLocationManager.HOST_CONFIG_PATH);
-					byte[] data = Convert.FromBase64String(hostnameBase64);
-					_hostname = Encoding.ASCII.GetString(data);
+
+					byte[] certArray = File.ReadAllBytes(@"C:\ProgramData\Qlik\Sense\Repository\Exported Certificates\.Local Certificates\client.pem");
+
+					_certificate = new X509Certificate2(certArray);
+					_hostname = _certificate.Issuer;
 				}
-				return _hostname;
+				return _hostname.Replace("CN=", "").Replace("-CA", "");
 			}
 		}
 
