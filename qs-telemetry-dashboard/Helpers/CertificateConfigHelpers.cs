@@ -26,9 +26,9 @@ namespace qs_telemetry_dashboard.Helpers
 					byte[] certArray = File.ReadAllBytes(@"C:\ProgramData\Qlik\Sense\Repository\Exported Certificates\.Local Certificates\client.pem");
 
 					_certificate = new X509Certificate2(certArray);
-					_hostname = _certificate.Issuer;
+					_certificateIssuer = _certificate.Issuer;
 				}
-				return _hostname.Replace("CN=", "").Replace("-CA", "");
+				return _certificateIssuer.Replace("CN=", "").Replace("-CA", "");
 			}
 		}
 
