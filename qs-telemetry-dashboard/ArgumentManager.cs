@@ -14,6 +14,8 @@ namespace qs_telemetry_dashboard
 		internal bool InitializeRun { get; }
 		internal bool FetchMetadataRun { get; }
 
+		internal bool UseLocalEngine { get; }
+
 		internal const string HELP_STRING =
 @"Telemetry Dashboard
 
@@ -31,6 +33,7 @@ Arguments:
 			TestRun = false;
 			InitializeRun = false;
 			FetchMetadataRun = false;
+			UseLocalEngine = false;
 
 			if (args.Length == 0)
 			{
@@ -99,6 +102,11 @@ Arguments:
 				{
 					argDic.Remove("-initialize");
 					InitializeRun = true;
+				}
+				if (argDic.TryGetValue("-uselocalengine", out argValue))
+				{
+					argDic.Remove("-uselocalengine");
+					UseLocalEngine = true;
 				}
 
 

@@ -54,7 +54,19 @@ namespace qs_telemetry_dashboard.MetadataFetch
 			newMetadata.ParseSheets(unparsedSheets);
 			newMetadata.PopulateFromCachedMetadata(oldMeta);
 
-			GetEngineObjects(newMetadata);
+
+			string centralNodeHost;
+			if (!TelemetryDashboardMain.ArgsManager.UseLocalEngine)
+			{
+				centralNodeHost = GetCentralNodeHostname();
+				TelemetryDashboardMain.Logger.Log("Got central node hostname for engine calls: " + centralNodeHost, LogLevel.Info);
+			}
+			else
+			{
+				centralNodeHost = CertificateConfigHelpers.Hostname;
+				TelemetryDashboardMain.Logger.Log("Arg '-uselocalengine' was used. Using hostname '" + centralNodeHost + "' for all engine calls.", LogLevel.Info);
+			}
+			GetEngineObjects(centralNodeHost, newMetadata);
 
 			Stream SaveFileStream = File.Create(telemetryMetadataFile);
 			BinaryFormatter serializer = new BinaryFormatter();
@@ -75,6 +87,20 @@ namespace qs_telemetry_dashboard.MetadataFetch
 			JObject aboutJSON = JObject.Parse(aboutResponse.Item2);
 			telemetryMetadata.Version = aboutJSON["version"].ToString();
 			telemetryMetadata.ReleaseLabel = aboutJSON["releaseLabel"].ToString();
+		}
+
+		private static string GetCentralNodeHostname()
+		{
+			TelemetryDashboardMain.Logger.Log("Getting central node hostname for engine calls.", LogLevel.Info);
+			Tuple<HttpStatusCode, string> centralNodeResponse = TelemetryDashboardMain.QRSRequest.MakeRequest("/servernodeconfiguration?filter=isCentral eq true", HttpMethod.Get);
+			if (centralNodeResponse.Item1 != HttpStatusCode.OK)
+			{
+				TelemetryDashboardMain.Logger.Log("Failed to get central node server config. Reponse was: '" + centralNodeResponse.Item1 +"'. Will use default host.cfg instead.", LogLevel.Error);
+				return CertificateConfigHelpers.Hostname;
+			}
+			JArray centralNodeObject = JArray.Parse(centralNodeResponse.Item2);
+			string hostname = centralNodeObject[0]["hostName"].ToString();
+			return hostname;
 		}
 
 		private static void GetRepositoryExtensions(TelemetryMetadata metadataObject)
@@ -173,7 +199,20 @@ namespace qs_telemetry_dashboard.MetadataFetch
 					string typeString = type.ToString();
 					if (typeString == "visualization")
 					{
-						metadataObject.ExtensionSchemas.Add(new ExtensionSchema(schema.Name, schema.Value["name"].ToString(), typeString));
+						string name;
+						JToken jTokenName = schema.Value["name"];
+						if (jTokenName != null)
+						{
+							name = jTokenName.ToString();
+						}
+						else
+						{
+
+							name = schema.Name;
+							TelemetryDashboardMain.Logger.Log("No 'name' property found for extension schema object '" + name + "', using object name instead", LogLevel.Debug);
+
+						}
+						metadataObject.ExtensionSchemas.Add(new ExtensionSchema(schema.Name, name, typeString));
 					}
 				}
 			}
@@ -400,9 +439,9 @@ namespace qs_telemetry_dashboard.MetadataFetch
 			return allSheets;
 		}
 
-		private static void GetEngineObjects(TelemetryMetadata metadata)
+		private static void GetEngineObjects(string centralNodeHostname, TelemetryMetadata metadata)
 		{
-			string wssPath = "https://" + CertificateConfigHelpers.Hostname + ":4747";
+			string wssPath = "https://" + centralNodeHostname + ":4747";
 			ILocation location = Location.FromUri(new Uri(wssPath));
 
 			X509Certificate2Collection certificateCollection = new X509Certificate2Collection(CertificateConfigHelpers.Certificate);
