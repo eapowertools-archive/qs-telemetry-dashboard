@@ -95,7 +95,7 @@ namespace qs_telemetry_dashboard.MetadataFetch
 			Tuple<HttpStatusCode, string> centralNodeResponse = TelemetryDashboardMain.QRSRequest.MakeRequest("/servernodeconfiguration?filter=isCentral eq true", HttpMethod.Get);
 			if (centralNodeResponse.Item1 != HttpStatusCode.OK)
 			{
-				TelemetryDashboardMain.Logger.Log("Failed to get central node server config. Reponse was: '" + centralNodeResponse.Item1 +"'. Will use default host.cfg instead.", LogLevel.Error);
+				TelemetryDashboardMain.Logger.Log("Failed to get central node server config. Reponse was: '" + centralNodeResponse.Item1 + "'. Will use default host.cfg instead.", LogLevel.Error);
 				return CertificateConfigHelpers.Hostname;
 			}
 			JArray centralNodeObject = JArray.Parse(centralNodeResponse.Item2);
@@ -207,10 +207,8 @@ namespace qs_telemetry_dashboard.MetadataFetch
 						}
 						else
 						{
-
 							name = schema.Name;
 							TelemetryDashboardMain.Logger.Log("No 'name' property found for extension schema object '" + name + "', using object name instead", LogLevel.Debug);
-
 						}
 						metadataObject.ExtensionSchemas.Add(new ExtensionSchema(schema.Name, name, typeString));
 					}
