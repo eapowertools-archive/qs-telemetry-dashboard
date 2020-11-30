@@ -348,7 +348,7 @@ namespace qs_telemetry_dashboard.MetadataFetch
 			{
 				Guid appID = app[0].ToObject<Guid>();
 				string appName = app[1].ToString();
-				TelemetryDashboardMain.Logger.Log(string.Format("Processing app '{0}' with ID '{1}'", appID, appName), LogLevel.Debug);
+				TelemetryDashboardMain.Logger.Log(string.Format("Processing app '{1}' with ID '{0}'", appID, appName), LogLevel.Debug);
 
 				bool published = app[4].ToObject<bool>();
 				QRSApp newApp;
@@ -360,7 +360,13 @@ namespace qs_telemetry_dashboard.MetadataFetch
 				{
 					newApp = new QRSApp(appName, app[2].ToObject<DateTime>(), app[3].ToObject<Guid>(), published, app[5].ToObject<DateTime>(), app[6].ToObject<Guid>(), app[7].ToString());
 				}
-				metadataObject.Apps.Add(appID, newApp);
+				try
+				{
+					metadataObject.Apps.Add(appID, newApp);
+				} catch (Exception e)
+				{
+					TelemetryDashboardMain.Logger.Log(string.Format("App '{1}' with ID '{0}' has already been added. This is probably due to an app being added while fetching the metadata. This error can likely be ignored. Internal error: {2}", appID, appName, e.Message), LogLevel.Error);
+				}
 			};
 
 			GetRepositoryPagedObjects("app", appBody, addAction);
