@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-
+using qs_telemetry_dashboard.Logging;
 using qs_telemetry_dashboard.Models.UnparsedObject;
 
 namespace qs_telemetry_dashboard.Models
@@ -59,7 +59,14 @@ namespace qs_telemetry_dashboard.Models
 		{
 			unparsedSheets.ToList().ForEach(sheet =>
 			{
-				this.Apps[sheet.AppID].Sheets.Add(sheet.ID, new QRSSheet(sheet.EngineObjectID, sheet.Name, sheet.ModifiedDateTime, sheet.OwnerID, sheet.Published, sheet.Approved));
+				try
+				{
+					this.Apps[sheet.AppID].Sheets.Add(sheet.ID, new QRSSheet(sheet.EngineObjectID, sheet.Name, sheet.ModifiedDateTime, sheet.OwnerID, sheet.Published, sheet.Approved));
+				}
+				catch (KeyNotFoundException e)
+				{
+					TelemetryDashboardMain.Logger.Log(string.Format("Failed referencing app with ID '{0}' to parse sheet with ID '{1}' and engine ID '{2}'.", sheet.AppID, sheet.ID, sheet.EngineObjectID), LogLevel.Error);
+				}
 			});
 		}
 
@@ -72,7 +79,7 @@ namespace qs_telemetry_dashboard.Models
 
 			IList<Guid> newAppKeys = this.Apps.Keys.ToList();
 
-			foreach(Guid key in newAppKeys)
+			foreach (Guid key in newAppKeys)
 			{
 				QRSApp oldApp;
 				if (oldMeta.Apps.TryGetValue(key, out oldApp))
