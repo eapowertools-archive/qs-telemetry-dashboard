@@ -15,6 +15,7 @@ namespace qs_telemetry_dashboard
 		internal bool FetchMetadataRun { get; }
 
 		internal bool UseLocalEngine { get; }
+		internal bool SkipCopy { get; }
 
 		internal const string HELP_STRING =
 @"Telemetry Dashboard
@@ -34,6 +35,7 @@ Arguments:
 			InitializeRun = false;
 			FetchMetadataRun = false;
 			UseLocalEngine = false;
+			SkipCopy = false;
 
 			if (args.Length == 0)
 			{
@@ -53,11 +55,11 @@ Arguments:
 					{
 						if (x.Contains('='))
 						{
-							return x.Split('=')[0].Substring(1);
+							return x.Split('=')[0].Substring(1).ToLowerInvariant();
 						}
 						else
 						{
-							return x;
+							return x.ToLowerInvariant();
 						}
 					},
 					y =>
@@ -108,7 +110,11 @@ Arguments:
 					argDic.Remove("-uselocalengine");
 					UseLocalEngine = true;
 				}
-
+				if (argDic.TryGetValue("-skipcopy", out argValue))
+				{
+					argDic.Remove("-skipcopy");
+					SkipCopy = true;
+				}
 
 				if (argDic.Count > 0)
 				{

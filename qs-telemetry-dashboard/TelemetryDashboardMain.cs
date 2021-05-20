@@ -159,7 +159,7 @@ namespace qs_telemetry_dashboard
 				{
 					Logger.Log("Initialize Mode:", LogLevel.Info);
 
-					return InitializeEnvironment.Run(serviceAccount);
+					return InitializeEnvironment.Run(serviceAccount, ArgsManager.SkipCopy);
 				}
 				return 0;
 			}
