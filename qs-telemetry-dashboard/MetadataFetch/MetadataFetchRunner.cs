@@ -23,7 +23,7 @@ namespace qs_telemetry_dashboard.MetadataFetch
 	{
 		internal static int PAGESIZE = 200;
 
-		internal static int Run(int engineRequestTimeoutMS = 30000)
+		internal static int Run(int engineRequestTimeoutMS)
 		{
 			// check to see if metadata binary exists
 			string telemetryMetadataFile = Path.Combine(FileLocationManager.GetTelemetrySharePath(), FileLocationManager.METADATA_BINARY_FILE_NAME);
