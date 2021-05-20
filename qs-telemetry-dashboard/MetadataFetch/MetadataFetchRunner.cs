@@ -363,7 +363,8 @@ namespace qs_telemetry_dashboard.MetadataFetch
 				try
 				{
 					metadataObject.Apps.Add(appID, newApp);
-				} catch (Exception e)
+				}
+				catch (Exception e)
 				{
 					TelemetryDashboardMain.Logger.Log(string.Format("App '{1}' with ID '{0}' has already been added. This is probably due to an app being added while fetching the metadata. This error can likely be ignored. Internal error: {2}", appID, appName, e.Message), LogLevel.Error);
 				}
@@ -467,6 +468,10 @@ namespace qs_telemetry_dashboard.MetadataFetch
 					TelemetryDashboardMain.Logger.Log(string.Format("Getting visualaizations for app '{0}' with ID '{1}' ", appTuple.Value.Name, appTuple.Key.ToString()), LogLevel.Info);
 					try
 					{
+						TelemetryDashboardMain.Logger.Log(string.Format("Current timeout is set to: '{1}' ", Qlik.Sense.JsonRpc.RpcConnection.Timeout.ToString()), LogLevel.Info);
+
+						//Qlik.Sense.JsonRpc.RpcConnection.Timeout = Int32.MaxValue;
+
 						IAppIdentifier appIdentifier = new AppIdentifier() { AppId = appTuple.Key.ToString() };
 						using (IApp app = location.App(appIdentifier, null, true))
 						{
