@@ -446,7 +446,7 @@ namespace qs_telemetry_dashboard.MetadataFetch
 
 		private static void GetEngineObjects(string centralNodeHostname, TelemetryMetadata metadata, int engineRequestTimeoutMS)
 		{
-			TelemetryDashboardMain.Logger.Log(string.Format("Engine request timeout set to: {0} ms (default is: 30000 ms)" + engineRequestTimeoutMS.ToString()), LogLevel.Info);
+			TelemetryDashboardMain.Logger.Log(string.Format("Engine request timeout set to: {0} ms (default is: 30000 ms)", engineRequestTimeoutMS.ToString()), LogLevel.Info);
 
 			Qlik.Sense.JsonRpc.RpcConnection.Timeout = engineRequestTimeoutMS;
 
