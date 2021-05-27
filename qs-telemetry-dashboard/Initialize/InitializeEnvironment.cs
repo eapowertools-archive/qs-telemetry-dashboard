@@ -14,7 +14,7 @@ namespace qs_telemetry_dashboard.Initialize
 {
 	internal class InitializeEnvironment
 	{
-		internal static int Run(string serviceAccount)
+		internal static int Run(string serviceAccount, bool skipCopy = false)
 		{
 			TelemetryDashboardMain.Logger.Log("Running in initialize mode.", LogLevel.Info);
 
@@ -25,59 +25,69 @@ namespace qs_telemetry_dashboard.Initialize
 			TelemetryDashboardMain.Logger.Log("Share folder TelemetryDashboard.exe path: " + telemetryExePath, LogLevel.Debug);
 			TelemetryDashboardMain.Logger.Log("Share folder TelemetryDashboard.exe root path: " + telemetrySharePath, LogLevel.Debug);
 
-			string telemetryExeNonUNCPath = FileLocationManager.GetPath(telemetryExePath);
-			TelemetryDashboardMain.Logger.Log("GetPath() for telemetryExePath: " + telemetryExeNonUNCPath, LogLevel.Debug);
 
-			if (telemetryExeNonUNCPath != FileLocationManager.WorkingTelemetryDashboardExePath)
+			if (!skipCopy)
 			{
-				TelemetryDashboardMain.Logger.Log("Not running executable in Telemetry Folder, will copy file.", LogLevel.Debug);
+				string telemetryExeNonUNCPath = FileLocationManager.GetPath(telemetryExePath);
+				TelemetryDashboardMain.Logger.Log("GetPath() for telemetryExePath: " + telemetryExeNonUNCPath, LogLevel.Debug);
 
-				bool doCopy = true;
-				if (File.Exists(telemetryExePath))
+				if (telemetryExeNonUNCPath != FileLocationManager.WorkingTelemetryDashboardExePath)
 				{
-					try
-					{
-						TelemetryDashboardMain.Logger.Log("Old TelemetryDashboard.exe file found. Deleting.", LogLevel.Debug);
+					TelemetryDashboardMain.Logger.Log("Not running executable in Telemetry Folder, will copy file.", LogLevel.Debug);
 
-						File.Delete(telemetryExePath);
-					}
-					catch (UnauthorizedAccessException)
+					bool doCopy = true;
+					if (File.Exists(telemetryExePath))
 					{
-						TelemetryDashboardMain.Logger.Log(string.Format("Tried to delete '{0}', unauthorizaed access. This probably means you are running this executable and can ignore the error, OR you do not have access to delete this file.", telemetryExePath), LogLevel.Debug);
-						doCopy = false;
+						try
+						{
+							TelemetryDashboardMain.Logger.Log("Old TelemetryDashboard.exe file found. Deleting.", LogLevel.Debug);
+
+							File.Delete(telemetryExePath);
+						}
+						catch (UnauthorizedAccessException)
+						{
+							TelemetryDashboardMain.Logger.Log(string.Format("Tried to delete '{0}', unauthorizaed access. This probably means you are running this executable and can ignore the error, OR you do not have access to delete this file.", telemetryExePath), LogLevel.Debug);
+							doCopy = false;
+						}
+					}
+					if (doCopy)
+					{
+						if (!Directory.Exists(telemetrySharePath))
+						{
+							Directory.CreateDirectory(telemetrySharePath);
+
+						}
+						TelemetryDashboardMain.Logger.Log("Copying TelemetryDashboard.exe.", LogLevel.Debug);
+						File.Copy(FileLocationManager.WorkingTelemetryDashboardExePath, telemetryExePath);
+
+						try
+						{
+							// Change Permissions to allow service account:
+							DirectoryInfo dInfo = new DirectoryInfo(telemetrySharePath);
+							FileInfo fInfo = new FileInfo(telemetryExePath);
+
+							DirectorySecurity dSecurity = dInfo.GetAccessControl();
+							FileSecurity fSecurity = fInfo.GetAccessControl();
+
+							dSecurity.AddAccessRule(new FileSystemAccessRule(serviceAccount, FileSystemRights.FullControl, AccessControlType.Allow));
+							fSecurity.AddAccessRule(new FileSystemAccessRule(serviceAccount, FileSystemRights.FullControl, AccessControlType.Allow));
+
+							dInfo.SetAccessControl(dSecurity);
+							fInfo.SetAccessControl(fSecurity);
+						}
+						catch (IdentityNotMappedException)
+						{
+							TelemetryDashboardMain.Logger.Log("Invalid service account '" + serviceAccount + "' was entered. Initialize failed to complete.", LogLevel.Error);
+							return 1;
+						}
 					}
 				}
-				if (doCopy)
-				{
-					if (!Directory.Exists(telemetrySharePath))
-					{
-						Directory.CreateDirectory(telemetrySharePath);
-
-					}
-					TelemetryDashboardMain.Logger.Log("Copying TelemetryDashboard.exe.", LogLevel.Debug);
-					File.Copy(FileLocationManager.WorkingTelemetryDashboardExePath, telemetryExePath);
-
-					try
-					{
-						// Change Permissions to allow service account:
-						DirectoryInfo dInfo = new DirectoryInfo(telemetrySharePath);
-						FileInfo fInfo = new FileInfo(telemetryExePath);
-
-						DirectorySecurity dSecurity = dInfo.GetAccessControl();
-						FileSecurity fSecurity = fInfo.GetAccessControl();
-
-						dSecurity.AddAccessRule(new FileSystemAccessRule(serviceAccount, FileSystemRights.FullControl, AccessControlType.Allow));
-						fSecurity.AddAccessRule(new FileSystemAccessRule(serviceAccount, FileSystemRights.FullControl, AccessControlType.Allow));
-
-						dInfo.SetAccessControl(dSecurity);
-						fInfo.SetAccessControl(fSecurity);
-					}
-					catch (IdentityNotMappedException)
-					{
-						TelemetryDashboardMain.Logger.Log("Invalid service account '"+serviceAccount+"' was entered. Initialize failed to complete.", LogLevel.Error);
-						return 1;
-					}
-				}
+			}
+			else
+			{
+				TelemetryDashboardMain.Logger.Log("Will NOT copy file to share location due to command line arguments flag set.", LogLevel.Info);
+				TelemetryDashboardMain.Logger.Log("FILE LOCATION OF EXECUTABLE CURRENTLY RUNNING MUST MATCH: " + telemetryExePath, LogLevel.Info);
+				TelemetryDashboardMain.Logger.Log("If this is not the case, you can copy the executable to the above location after this initialization completes.", LogLevel.Info);
 			}
 
 

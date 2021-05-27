@@ -23,7 +23,7 @@ namespace qs_telemetry_dashboard.MetadataFetch
 	{
 		internal static int PAGESIZE = 200;
 
-		internal static int Run()
+		internal static int Run(int engineRequestTimeoutMS)
 		{
 			// check to see if metadata binary exists
 			string telemetryMetadataFile = Path.Combine(FileLocationManager.GetTelemetrySharePath(), FileLocationManager.METADATA_BINARY_FILE_NAME);
@@ -66,7 +66,7 @@ namespace qs_telemetry_dashboard.MetadataFetch
 				centralNodeHost = CertificateConfigHelpers.Hostname;
 				TelemetryDashboardMain.Logger.Log("Arg '-uselocalengine' was used. Using hostname '" + centralNodeHost + "' for all engine calls.", LogLevel.Info);
 			}
-			GetEngineObjects(centralNodeHost, newMetadata);
+			GetEngineObjects(centralNodeHost, newMetadata, engineRequestTimeoutMS);
 
 			Stream SaveFileStream = File.Create(telemetryMetadataFile);
 			BinaryFormatter serializer = new BinaryFormatter();
@@ -363,7 +363,8 @@ namespace qs_telemetry_dashboard.MetadataFetch
 				try
 				{
 					metadataObject.Apps.Add(appID, newApp);
-				} catch (Exception e)
+				}
+				catch (Exception e)
 				{
 					TelemetryDashboardMain.Logger.Log(string.Format("App '{1}' with ID '{0}' has already been added. This is probably due to an app being added while fetching the metadata. This error can likely be ignored. Internal error: {2}", appID, appName, e.Message), LogLevel.Error);
 				}
@@ -443,8 +444,12 @@ namespace qs_telemetry_dashboard.MetadataFetch
 			return allSheets;
 		}
 
-		private static void GetEngineObjects(string centralNodeHostname, TelemetryMetadata metadata)
+		private static void GetEngineObjects(string centralNodeHostname, TelemetryMetadata metadata, int engineRequestTimeoutMS)
 		{
+			TelemetryDashboardMain.Logger.Log(string.Format("Engine request timeout set to: {0} ms (default is: 30000 ms)", engineRequestTimeoutMS.ToString()), LogLevel.Info);
+
+			Qlik.Sense.JsonRpc.RpcConnection.Timeout = engineRequestTimeoutMS;
+
 			string wssPath = "https://" + centralNodeHostname + ":4747";
 			ILocation location = Location.FromUri(new Uri(wssPath));
 
@@ -464,7 +469,7 @@ namespace qs_telemetry_dashboard.MetadataFetch
 
 				if (appTuple.Value.VisualizationUpdateNeeded)
 				{
-					TelemetryDashboardMain.Logger.Log(string.Format("Getting visualaizations for app '{0}' with ID '{1}' ", appTuple.Value.Name, appTuple.Key.ToString()), LogLevel.Info);
+					TelemetryDashboardMain.Logger.Log(string.Format("Getting visualizations for app '{0}' with ID '{1}' ", appTuple.Value.Name, appTuple.Key.ToString()), LogLevel.Info);
 					try
 					{
 						IAppIdentifier appIdentifier = new AppIdentifier() { AppId = appTuple.Key.ToString() };

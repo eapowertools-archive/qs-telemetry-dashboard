@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 
 using qs_telemetry_dashboard.Exceptions;
@@ -15,6 +16,9 @@ namespace qs_telemetry_dashboard
 		internal bool FetchMetadataRun { get; }
 
 		internal bool UseLocalEngine { get; }
+		internal bool SkipCopy { get; }
+
+		internal int EngineTimeout { get; }
 
 		internal const string HELP_STRING =
 @"Telemetry Dashboard
@@ -34,6 +38,8 @@ Arguments:
 			InitializeRun = false;
 			FetchMetadataRun = false;
 			UseLocalEngine = false;
+			SkipCopy = false;
+			EngineTimeout = 30000;
 
 			if (args.Length == 0)
 			{
@@ -53,11 +59,11 @@ Arguments:
 					{
 						if (x.Contains('='))
 						{
-							return x.Split('=')[0].Substring(1);
+							return x.Split('=')[0].Substring(1).ToLowerInvariant();
 						}
 						else
 						{
-							return x;
+							return x.ToLowerInvariant();
 						}
 					},
 					y =>
@@ -108,7 +114,23 @@ Arguments:
 					argDic.Remove("-uselocalengine");
 					UseLocalEngine = true;
 				}
-
+				if (argDic.TryGetValue("-skipcopy", out argValue))
+				{
+					argDic.Remove("-skipcopy");
+					SkipCopy = true;
+				}
+				if (argDic.TryGetValue("-enginetimeout", out argValue))
+				{
+					argDic.Remove("-enginetimeout");
+					int engineTimeoutValue;
+					if (Int32.TryParse(argValue, out engineTimeoutValue))
+					{
+						EngineTimeout = engineTimeoutValue;
+					}
+					else {
+						throw new ArgumentManagerException("Failed to parse argument '-enginetimeout' with value '" + argValue + "'. Value must be an integer.");
+					}
+				}
 
 				if (argDic.Count > 0)
 				{

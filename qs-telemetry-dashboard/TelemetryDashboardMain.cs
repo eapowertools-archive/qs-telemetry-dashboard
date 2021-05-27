@@ -159,7 +159,7 @@ namespace qs_telemetry_dashboard
 				{
 					Logger.Log("Initialize Mode:", LogLevel.Info);
 
-					return InitializeEnvironment.Run(serviceAccount);
+					return InitializeEnvironment.Run(serviceAccount, ArgsManager.SkipCopy);
 				}
 				return 0;
 			}
@@ -184,7 +184,7 @@ namespace qs_telemetry_dashboard
 				}
 
 				// fetch metadata and wriet to csv
-				int returnVal = MetadataFetchRunner.Run();
+				int returnVal = MetadataFetchRunner.Run(ArgsManager.EngineTimeout);
 
 				DateTime endTime = DateTime.UtcNow;
 				TimeSpan totalTime = endTime - startTime;
