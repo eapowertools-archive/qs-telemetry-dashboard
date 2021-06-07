@@ -97,6 +97,8 @@ namespace qs_telemetry_dashboard.Helpers
 				}
 			}
 
+			TelemetryDashboardMain.Logger.Log(string.Format("Request - Ready to send request: '{0}' to '{1}'.", method.ToString(), path), LogLevel.Debug);
+
 			using (HttpClient client = new HttpClient(handler))
 			{
 				client.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
@@ -123,7 +125,7 @@ namespace qs_telemetry_dashboard.Helpers
 					}
 				}
 			}
-
+			TelemetryDashboardMain.Logger.Log(string.Format("Request - Response code received: '{0}'", responseCode), LogLevel.Debug);
 			return new Tuple<HttpStatusCode, string>(responseCode, responseString);
 		}
 

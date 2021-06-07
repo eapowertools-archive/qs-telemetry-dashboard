@@ -503,7 +503,10 @@ namespace qs_telemetry_dashboard.MetadataFetch
 			{
 				throw new InvalidResponseException(numOfObjects.Item1.ToString() + " returned when trying to get a count of all objects of type '" + type + "'. Request failed.");
 			}
-			return JObject.Parse(numOfObjects.Item2)["value"].ToObject<int>();
+			TelemetryDashboardMain.Logger.Log("Count request returned with OK", LogLevel.Debug);
+			int parsedInt = JObject.Parse(numOfObjects.Item2)["value"].ToObject<int>();
+			TelemetryDashboardMain.Logger.Log("Fetched all '" + type + "' objects. There were: " + parsedInt.ToString(), LogLevel.Debug);
+			return parsedInt;
 		}
 
 		private static void GetRepositoryPagedObjects(string type, string body, Action<JArray> addAction)
