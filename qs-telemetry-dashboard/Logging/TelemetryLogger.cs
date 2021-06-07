@@ -32,6 +32,18 @@ namespace qs_telemetry_dashboard.Logging
 			_logLevel = level;
 			_ticker = 0;
 
+			string tdVersion = typeof(TelemetryLogger).Assembly.GetName().Version.ToString();
+			tdVersion = tdVersion.Substring(0, tdVersion.Length - 2);
+			tdVersion = " v" + tdVersion;
+			if(tdVersion.Length > 30)
+			{
+				throw new Exception("Version number is way too long.");
+			}
+			while (tdVersion.Length < 30)
+			{
+				tdVersion += ' ';
+			}
+
 			try
 			{
 				if (File.Exists(_logFileFullPath))
@@ -40,11 +52,12 @@ namespace qs_telemetry_dashboard.Logging
 				}
 				using (StreamWriter sw = new StreamWriter(_logFileFullPath))
 				{
-					sw.WriteLine("------------------------------------------------");
-					sw.WriteLine("| Telemetry Dashboard metadata fetch execution |");
-					sw.WriteLine("------------------------------------------------");
-					sw.WriteLine(_logFileFullPath);
-					sw.WriteLine(DateTime.UtcNow.ToString("o") + "\n");
+					sw.WriteLine("--------------------------------");
+					sw.WriteLine("| Telemetry Dashboard log file |");
+					sw.WriteLine("|" + tdVersion + "|");
+					sw.WriteLine("| " + DateTime.UtcNow.ToString("o") + " |");
+					sw.WriteLine("--------------------------------");
+					sw.WriteLine(_logFileFullPath + '\n');
 				}
 			}
 			catch (UnauthorizedAccessException unauthorizedException)
