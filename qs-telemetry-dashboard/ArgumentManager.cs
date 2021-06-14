@@ -19,6 +19,7 @@ namespace qs_telemetry_dashboard
 		internal bool SkipCopy { get; }
 
 		internal int EngineTimeout { get; }
+		internal int RepositoryTimeout { get; }
 
 		internal const string HELP_STRING =
 @"Telemetry Dashboard
@@ -40,6 +41,7 @@ Arguments:
 			UseLocalEngine = false;
 			SkipCopy = false;
 			EngineTimeout = 30000;
+			RepositoryTimeout = 100000;
 
 			if (args.Length == 0)
 			{
@@ -129,6 +131,19 @@ Arguments:
 					}
 					else {
 						throw new ArgumentManagerException("Failed to parse argument '-enginetimeout' with value '" + argValue + "'. Value must be an integer.");
+					}
+				}
+				if (argDic.TryGetValue("-repositorytimeout", out argValue))
+				{
+					argDic.Remove("-repositorytimeout");
+					int repositoryTimeoutValue;
+					if (Int32.TryParse(argValue, out repositoryTimeoutValue))
+					{
+						RepositoryTimeout = repositoryTimeoutValue;
+					}
+					else
+					{
+						throw new ArgumentManagerException("Failed to parse argument '-repositorytimeout' with value '" + argValue + "'. Value must be an integer.");
 					}
 				}
 

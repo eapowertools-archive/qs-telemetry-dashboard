@@ -63,7 +63,7 @@ namespace qs_telemetry_dashboard.Models
 				{
 					this.Apps[sheet.AppID].Sheets.Add(sheet.ID, new QRSSheet(sheet.EngineObjectID, sheet.Name, sheet.ModifiedDateTime, sheet.OwnerID, sheet.Published, sheet.Approved));
 				}
-				catch (KeyNotFoundException e)
+				catch (KeyNotFoundException)
 				{
 					TelemetryDashboardMain.Logger.Log(string.Format("Failed referencing app with ID '{0}' to parse sheet with ID '{1}' and engine ID '{2}'.", sheet.AppID, sheet.ID, sheet.EngineObjectID), LogLevel.Error);
 				}

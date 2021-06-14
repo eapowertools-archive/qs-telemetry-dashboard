@@ -19,12 +19,13 @@ namespace qs_telemetry_dashboard.Helpers
 	{
 		private readonly X509Certificate2 _certificate;
 		private readonly string _hostname;
+		private readonly int _timeout;
 
-		public QlikRepositoryRequester(string hostname, X509Certificate2 certificate)
+		public QlikRepositoryRequester(string hostname, X509Certificate2 certificate, int timeout)
 		{
 			_hostname = hostname;
 			_certificate = certificate;
-
+			_timeout = timeout;
 		}
 
 		internal Tuple<HttpStatusCode, string> MakeRequest(string path, HttpMethod method, HTTPContentType contentType = HTTPContentType.json, byte[] body = null, bool isQRS = true, string port = "4242")
@@ -101,6 +102,7 @@ namespace qs_telemetry_dashboard.Helpers
 
 			using (HttpClient client = new HttpClient(handler))
 			{
+				client.Timeout = TimeSpan.FromMilliseconds(_timeout);
 				client.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
 				try
 				{
