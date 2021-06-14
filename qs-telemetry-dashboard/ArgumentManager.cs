@@ -59,7 +59,7 @@ Arguments:
 					{
 						if (x.Contains('='))
 						{
-							return x.Split('=')[0].Substring(1).ToLowerInvariant();
+							return x.Split('=')[0].Substring(0).ToLowerInvariant();
 						}
 						else
 						{
