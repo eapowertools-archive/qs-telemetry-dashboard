@@ -121,7 +121,7 @@ namespace qs_telemetry_dashboard.Initialize
 
 				string appID = listOfApps[0]["id"].ToString();
 				Tuple<HttpStatusCode, string> replaceAppResponse = TelemetryDashboardMain.QRSRequest.MakeRequest("/app/upload/replace?targetappid=" + appID, HttpMethod.Post, HTTPContentType.app, Properties.Resources.Telemetry_Dashboard);
-				if (replaceAppResponse.Item1 == HttpStatusCode.Created)
+				if (replaceAppResponse.Item1 == HttpStatusCode.OK)
 				{
 					TelemetryDashboardMain.Logger.Log("App 'TelemetryDashboard' was replaced.", LogLevel.Info);
 					return JObject.Parse(replaceAppResponse.Item2)["id"].ToString();
