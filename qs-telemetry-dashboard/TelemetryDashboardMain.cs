@@ -94,7 +94,7 @@ namespace qs_telemetry_dashboard
 			// Get certificates and set up QRS Requester
 			try
 			{
-				_qrsInstance = new QlikRepositoryRequester(CertificateConfigHelpers.Hostname, CertificateConfigHelpers.Certificate);
+				_qrsInstance = new QlikRepositoryRequester(CertificateConfigHelpers.Hostname, CertificateConfigHelpers.Certificate, ArgsManager.RepositoryTimeout);
 			}
 			catch (UnauthorizedAccessException)
 			{
