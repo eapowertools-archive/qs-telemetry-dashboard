@@ -67,6 +67,10 @@ namespace qs_telemetry_dashboard.Models
 				{
 					TelemetryDashboardMain.Logger.Log(string.Format("Failed referencing app with ID '{0}' to parse sheet with ID '{1}' and engine ID '{2}'.", sheet.AppID, sheet.ID, sheet.EngineObjectID), LogLevel.Error);
 				}
+				catch (ArgumentException e)
+				{
+					TelemetryDashboardMain.Logger.Log(string.Format("Sheeet '{1}' with ID '{0}' has already been parsed for app with ID '{2}'. This is due to a timing issue or an inconsistency in the database. If no duplicate sheet IDs exist for the same app, this can be ignored. Internal error: {3}", sheet.ID, sheet.Name, sheet.AppID, e.Message), LogLevel.Error);
+				}
 			});
 		}
 
